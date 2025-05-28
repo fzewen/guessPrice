@@ -1,0 +1,24 @@
+<html>
+  <body>
+    <div id="ineligible" style="display: none; width: 100px">Try on Zillow home detail pages</div>
+    <div id="favorate" style="display: none; width: 100px">Check &#x1F4B0 for your estimates</div>
+    <div id="eligible">
+      <div id="h1s">Loading...</div>
+      <div id="price"></div>
+      <div id="mlsId"></div>
+      <form id="my-form">
+        <div style="display: flex; align-items: center;">
+          <span>&#x1F4B0</span>
+          <input 
+            type="text" 
+            id="priceInput" 
+            placeholder="Enter your guess..." 
+            style="width: 80px;"
+          />
+        </div>
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+    <script src="scrape.js" type="module"></script>
+  </body>
+</html>
