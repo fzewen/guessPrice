@@ -14,10 +14,16 @@
             id="priceInput" 
             placeholder="Enter your guess..." 
             style="width: 80px;"
+            disabled=true
           />
         </div>
-        <button type="submit">Submit</button>
+        <button type="submit" disabled=true>Submit</button>
       </form>
+      <div id="result" style="display: none">
+          <div id="win">&#127775</div>
+          <div id="guess">&#x1F4B0</div>
+          <div id="rank">&#127942</div>
+      </div>
     </div>
     <script src="scrape.js" type="module"></script>
   </body>

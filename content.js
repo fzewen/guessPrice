@@ -22,8 +22,12 @@ propertyCards.forEach(async(card) => {
   if (data && data[mlsId]) {
     const guessPrice = document.createElement("p");
     // const formatedPrice = Number(data[mlsId]).toLocaleString();
-    const formatedPrice = data[mlsId];
-    guessPrice.textContent = `💰 $${formatedPrice}`;
+    console.log(data[mlsId]);
+    let formatedLine = `💰 $${data[mlsId].price}`;
+    if (data[mlsId].rank) {
+      formatedLine += ` 🏆 $${data[mlsId].rank}`;
+    }
+    guessPrice.textContent = formatedLine
     priceRow.parentNode.insertAdjacentElement("afterend", guessPrice);  
   }
 });

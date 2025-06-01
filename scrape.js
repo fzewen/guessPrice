@@ -19,6 +19,7 @@ chrome.identity.onSignInChanged.addListener((account, signedIn) => {
 });
 
 const input = document.getElementById("my-form");
+const result = document.getElementById("result");
 input.addEventListener('input', (e) => {
   let value = e.target.value;
 
@@ -39,9 +40,14 @@ input.addEventListener("submit", function(event) {
   //  or use chrome.tabs.executeScript to inject code into the current page
   console.log("hhhhhh");
   console.log(mlsId);
-  const data = {[mlsId]: price};
+  const data = {[mlsId]: {price: price, status: 'Active'}};
   console.log(data);
-  chrome.runtime.sendMessage({ type: "user_input", data: data });
+  const cData = {
+    userId: userId,
+    mlsId: mlsId,
+    price: price,
+  };
+  chrome.runtime.sendMessage({ type: "user_input", localData: data, cloudData: cData});
 });
 
 const eligiblePages = 'https://www.zillow.com/homedetails/';
@@ -64,7 +70,10 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   chrome.runtime.sendMessage({ action: "scrape", tabId: tab.id });
 
   chrome.runtime.onMessage.addListener(async(msg) => {
-    if (msg.action === "scrapedData") {
+    if (msg.action === "clicked") {
+      console.log("Clickkkkkkkk2");
+      setInputStatus(true);
+    } else if (msg.action === "scrapedData") {
       document.getElementById("price").innerText = msg.data.price;
       const mlsId = msg.data.mlsId;
       document.getElementById("mlsId").innerText = mlsId;
@@ -73,20 +82,43 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       loads.innerHTML = "";
       console.log(typeof mlsId);
       console.log(mlsId);
-      var data;
-
+      console.log(msg);
+      let data;
       try {
         data = await chrome.storage.sync.get(mlsId);
       } catch (e) {
         // Handle error that occurred during storage initialization.
         console.log(e);
       }
-      // console.log(data);
-      // console.log(data[mlsId]);
-      if (data && data[mlsId]) {
-        document.getElementById("priceInput").value = data[mlsId];
+      if (msg.data.status == 'Sold') {
+        setInputStatus(true);
+        // the extra logic here to check against stored data
+        if (data && data[mlsId]) {
+          const status = data[mlsId].status;
+          if (status == 'Sold') {
+            // load result
+            result.style.display = 'block';
+            document.getElementById("win").innerText = '&#127775 ' + data[mlsId].winPrice;
+            document.getElementById("price").innerText = '&#x1F4B0 ' + data[mlsId].price;
+            document.getElementById("rank").innerText = '&#127942 ' + data[mlsId].rank;
+          } else {
+            // now result pending, wait cron job to update cloud & local
+            result.style.display = 'None';
+          }
+        }
+      } else {
+        setInputStatus(false);
+        if (data && data[mlsId]) {
+          console.log(data[mlsId].price);
+          document.getElementById("priceInput").value = data[mlsId].price;
+        }
       }
-
     }
   });
 });
+
+const setInputStatus = (status) => {
+  Array.from(input.elements).forEach(element => {
+    element.disabled = status;
+  });
+}
