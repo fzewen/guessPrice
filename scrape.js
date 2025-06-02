@@ -1,23 +1,3 @@
-export let userId;
-// how this get trigger each login and logout
-chrome.identity.getProfileUserInfo((userInfo) => {
-  userId = userInfo.id;
-  console.log("Got user ID:", userId);
-  // Do something with userId here (e.g., send to Firebase)
-});
-
-chrome.identity.onSignInChanged.addListener((account, signedIn) => {
-  if (signedIn) {
-    console.log("User signed in:", account.email);
-    // Do something, like re-fetch user data or auth token
-    userId = account.id;
-  } else {
-    console.log("User signed out");
-    // Optional: clear local storage or prompt re-auth
-    userId = null;
-  }
-});
-
 const input = document.getElementById("my-form");
 const result = document.getElementById("result");
 input.addEventListener('input', (e) => {
@@ -43,7 +23,6 @@ input.addEventListener("submit", function(event) {
   const data = {[mlsId]: {price: price, status: 'Active'}};
   console.log(data);
   const cData = {
-    userId: userId,
     mlsId: mlsId,
     price: price,
   };
@@ -122,3 +101,38 @@ const setInputStatus = (status) => {
     element.disabled = status;
   });
 }
+
+const SERVER_PUBLIC_KEY = 'BJ5LMVi-xpiHQs5nS5fXbWFdG9oijXK5rUb5vdSG-VqFQwayPAO3Bu_4aKw9PRbAnVTF14HQGQJvv1R0z0j4cF8';
+
+async function subscribeToPush() {
+  if (!('serviceWorker' in navigator)) {
+    console.error('Service workers are not supported.');
+    return;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.register('background.js');
+    console.log('SW registered:', registration);
+
+    const ready = await navigator.serviceWorker.ready;
+    const subscription = await ready.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(SERVER_PUBLIC_KEY)
+    });
+
+    console.log(`Subscribed: ${JSON.stringify(subscription,0,2)}`);
+
+    // Send `subscription` to your backend to save
+  } catch (err) {
+    console.error('Subscribe error:', err);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return new Uint8Array([...raw].map(char => char.charCodeAt(0)));
+}
+
+subscribeToPush();
