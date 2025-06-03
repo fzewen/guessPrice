@@ -1,4 +1,4 @@
-export let signInuserId;
+let signInuserId;
 // how this get trigger each login and logout
 chrome.identity.getProfileUserInfo((userInfo) => {
   signInuserId = userInfo.id;
@@ -146,17 +146,17 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// before are push testing
-self.addEventListener('push', function(event) {
-  const data = event.data?.json() || {};
-  console.log('Push received:', data);
+// below are push testing
+// self.addEventListener('push', function(event) {
+//   const data = event.data?.json() || {};
+//   console.log('Push received:', data);
 
-  const title = data.title || 'New Notification';
-  const options = {
-    body: data.body || 'You have a new message.',
-    icon: '/images/icon-32.png'
-  };
+//   const title = data.title || 'New Notification';
+//   const options = {
+//     body: data.body || 'You have a new message.',
+//     icon: '/images/icon-32.png'
+//   };
 
-  // *notification not working
-  event.waitUntil(self.registration.showNotification(title, options));
-});
+//   // *notification not working
+//   event.waitUntil(self.registration.showNotification(title, options));
+// });

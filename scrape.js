@@ -45,7 +45,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     return;
   } 
   document.getElementById("eligible").style.display = 'block';
-
+  console.log("scrapppppppppp");
   chrome.runtime.sendMessage({ action: "scrape", tabId: tab.id });
 
   chrome.runtime.onMessage.addListener(async(msg) => {
@@ -102,37 +102,38 @@ const setInputStatus = (status) => {
   });
 }
 
-const SERVER_PUBLIC_KEY = 'BJ5LMVi-xpiHQs5nS5fXbWFdG9oijXK5rUb5vdSG-VqFQwayPAO3Bu_4aKw9PRbAnVTF14HQGQJvv1R0z0j4cF8';
+// // below are pushing testing; not working
+// const SERVER_PUBLIC_KEY = 'BJ5LMVi-xpiHQs5nS5fXbWFdG9oijXK5rUb5vdSG-VqFQwayPAO3Bu_4aKw9PRbAnVTF14HQGQJvv1R0z0j4cF8';
 
-async function subscribeToPush() {
-  if (!('serviceWorker' in navigator)) {
-    console.error('Service workers are not supported.');
-    return;
-  }
+// async function subscribeToPush() {
+//   if (!('serviceWorker' in navigator)) {
+//     console.error('Service workers are not supported.');
+//     return;
+//   }
 
-  try {
-    const registration = await navigator.serviceWorker.register('background.js');
-    console.log('SW registered:', registration);
+//   try {
+//     const registration = await navigator.serviceWorker.register('background.js');
+//     console.log('SW registered:', registration);
 
-    const ready = await navigator.serviceWorker.ready;
-    const subscription = await ready.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(SERVER_PUBLIC_KEY)
-    });
+//     const ready = await navigator.serviceWorker.ready;
+//     const subscription = await ready.pushManager.subscribe({
+//       userVisibleOnly: true,
+//       applicationServerKey: urlBase64ToUint8Array(SERVER_PUBLIC_KEY)
+//     });
 
-    console.log(`Subscribed: ${JSON.stringify(subscription,0,2)}`);
+//     console.log(`Subscribed: ${JSON.stringify(subscription,0,2)}`);
 
-    // Send `subscription` to your backend to save
-  } catch (err) {
-    console.error('Subscribe error:', err);
-  }
-}
+//     // Send `subscription` to your backend to save
+//   } catch (err) {
+//     console.error('Subscribe error:', err);
+//   }
+// }
 
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = atob(base64);
-  return new Uint8Array([...raw].map(char => char.charCodeAt(0)));
-}
+// function urlBase64ToUint8Array(base64String) {
+//   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+//   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+//   const raw = atob(base64);
+//   return new Uint8Array([...raw].map(char => char.charCodeAt(0)));
+// }
 
-subscribeToPush();
+// subscribeToPush();
