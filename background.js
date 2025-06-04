@@ -98,7 +98,7 @@ function updateGuess(data) {
 
 function scrapePageInfo() {
   console.log("here");
-  const price = document.querySelector(`[data-testid="price"]`);
+  let price = document.querySelector(`[data-testid="price"]`);
   const container = document.querySelector('[data-testid="listing-attribution-overview"]');
   const statusElement = document.querySelector('[data-testid="chip-status-pill"] span:last-child');
   const status = statusElement?.innerText.trim();
@@ -111,18 +111,29 @@ function scrapePageInfo() {
 
     spans.forEach(span => {
       const text = span.textContent.trim();
-      // console.log(text);
+      console.log(text);
+      console.log(text.startsWith("MLS#:"));
+      console.log(text.includes("MLS#"));
       if (text.startsWith("MLS#:") || text.includes("MLS#")) {
-        const match = text.match(/ML\d{6,}/); // Looks for 'ML' followed by 6+ digits
+        console.log("innn");
+        const match = text.match(/\d{6,}/); // Looks for 'ML' followed by 6+ digits
         mlsId = match ? match[0] : null;
+        mlsId = "ML" + mlsId;
       }
     });
   }
   console.log("scarpinnnnnng");
   console.log(mlsId);
   console.log(status);
+  let priceText;
+  if (!price) {
+    const priceElement = document.getElementsByClassName('price-text')[0];
+    priceText = priceElement?.textContent.trim();
+  } else {
+    priceText = price.firstElementChild.innerText;
+  }
   const data = {
-    price: price.firstElementChild.innerText,
+    price: priceText,
     mlsId: mlsId,
     status: status,
   };

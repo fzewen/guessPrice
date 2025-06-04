@@ -22,13 +22,5 @@
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self';"
-  },
-  "content_scripts":[
-    {
-      "js": ["content.js"],
-      "matches": [
-        "https://www.zillow.com/myzillow/favorites"
-      ]
-    }
-  ]
+  }
 }
