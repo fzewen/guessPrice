@@ -34,7 +34,7 @@ input.addEventListener("submit", function(event) {
 const tabs = ["current", "guessed", "trending"];
 tabs.forEach(tab => {
   const el = document.getElementById(`tab-${tab}`);
-  el.addEventListener("click", () => {
+  el.addEventListener("click", async () => {
     tabs.forEach(t => {
       document.getElementById(`tab-${t}`).style.fontWeight = "normal";
       document.getElementById(`${t}`).style.display = "None";
@@ -43,7 +43,7 @@ tabs.forEach(tab => {
     document.getElementById(`${tab}`).style.display = "Block";
     if (tab == "guessed") {
       console.log("sending  guessss messsssss");
-      chrome.runtime.sendMessage({ action: "loadGuess"});
+      await loadGuess();
     } else if (tab == "trending") {
         chrome.runtime.sendMessage({ action: "fetchTrend"});
     }
@@ -67,11 +67,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   chrome.runtime.sendMessage({ action: "scrape", tabId: tab.id });
 
   chrome.runtime.onMessage.addListener(async(msg) => {
-    if (msg.action === "loadGuess") {
-      // this is not working
-      console.log('CCCaptureeee guessssss');
-      await loadGuess();
-    } else if (msg.action === "trendLoaded") {
+    if (msg.action === "trendLoaded") {
       setTrend(msg.data);
     } else if (msg.action === "clicked") {
       console.log("Clickkkkkkkk2");
@@ -86,7 +82,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       console.log(typeof mlsId);
       console.log(mlsId);
       console.log(msg);
-      await loadGuess();
+      // await loadGuess();
 
       let data;
       try {
@@ -142,6 +138,7 @@ const loadGuess= async () => {
 
   const data = await chrome.storage.sync.get("guesses");
   const guessList = document.getElementById("guessList");
+  guessList.innerHTML = "";
   console.log('load data...', data);
   console.log('load guess...', data.guesses);
   
