@@ -31,14 +31,17 @@ chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
       func: scrapePageInfo
     });
   } else if (msg.type === "user_input") {
-    const data = msg.localData;
-    console.log(data);
-    console.log(msg.cloudData);
+    let updateData = msg.data;
+    console.log(updateData);
     // mls -> price, rank, status, winPrice
+    // This is not very efficient, unless a global storage to load once
+    let data = await chrome.storage.sync.get('guesses');
+    data.guesses = data.guesses || {};
+    data.guesses[updateData.mlsId] = {price: updateData.price, status: 'Active'};
     chrome.storage.sync.set(data);
-    const cloudData = msg.cloudData;
-    cloudData.userId = signInuserId;
-    updateGuess(cloudData);
+
+    updateData.userId = signInuserId;
+    updateGuess(updateData);
     // saveGuess(userId, data);
     // Do something with the input value (e.g., send it to a server)
     console.log("Received input:", data);
@@ -50,6 +53,21 @@ chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
 
 
 async function loadTrend() {
+  let data = await chrome.storage.sync.get('trend');
+  console.log('at toppppp');
+  console.log('load trendddd...', data);
+  console.log('load trendddd...', data.trend);
+  console.log('load trendddd...', data.trend.lastFetchTime);
+  console.log('load trendddd...', data.trend.data);
+  const curTime = Date.now();
+  console.log('load trendddd...',curTime);
+  if (data && data.trend && data.trend.lastFetchTime) {
+    if (curTime - data.trend.lastFetchTime < 3600 * 1000) {
+      console.log("load trend from local.....");
+      chrome.runtime.sendMessage({ action: "trendLoaded", data: data.trend.data});
+      return;
+    }
+  }
   const params = new URLSearchParams();
   params.append('userId', signInuserId);
   const url = `https://us-central1-guessprice-a08ba.cloudfunctions.net/fetchTop?${params.toString()}`;
@@ -58,6 +76,13 @@ async function loadTrend() {
   fetch(url)
   .then(async response => {
     const data = await response.json();
+
+
+    //const data = {guesses: {[`${mlsId}`]: { price: price, status: 'Active' }}};
+    const trend = {trend: {lastFetchTime: curTime, data: data}};
+    await chrome.storage.sync.set(trend);
+    console.log("load trend from cloud.....");
+    console.log(trend);
     chrome.runtime.sendMessage({ action: "trendLoaded", data});
   })
   .catch(error => {
@@ -65,10 +90,9 @@ async function loadTrend() {
   });
 }
 
-// This will only load active case
-// server will return sold case within them
+// Not fully checked
 async function loadGuess() {
-  const result = await chrome.storage.sync.get();
+  const result = await chrome.storage.sync.get('guesses');
   const activeMlsIDs = Object.entries(result)
   .filter(([mlsID, info]) => info.status === 'active')
   .map(([mlsID]) => mlsID);
@@ -85,10 +109,11 @@ async function loadGuess() {
     // {mlsId: {rank, winPrice}}
     res.forEach(async(item) => {
       // update
-      let data = await chrome.storage.sync.get(item.mlsId);
-      data[item.mlsId].status = 'Sold';
-      data[item.mlsId].rank = item.rank;
-      data[item.mlsId].winPrice = item.winPrice;
+      let data = await chrome.storage.sync.get(`guesses`);
+      console.log('load guesssss', data);
+      data.guesses[item.mlsId].status = 'Sold';
+      data.guesses[item.mlsId].rank = item.rank;
+      data.guesses[item.mlsId].winPrice = item.winPrice;
       console.log(data);
       chrome.storage.sync.set(data);
     });
@@ -164,22 +189,16 @@ function scrapePageInfo() {
 chrome.runtime.onInstalled.addListener(() => {
   // fire per half day
   chrome.alarms.create("pollServer", { periodInMinutes: 720 });
-
-  // fire each hour
-  chrome.alarms.create("pollTrend", { periodInMinutes: 60 });
 });
 
 chrome.runtime.onStartup.addListener(() => {
   // fire on chrome
   chrome.alarms.create("pollServer");
-  chrome.alarms.create("pollTrend");
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "pollServer") {
     loadGuess();
-  } else if (alarm.name === "pollTrend") {
-    loadTrend();
   }
 });
 

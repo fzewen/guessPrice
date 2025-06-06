@@ -1,5 +1,12 @@
 const input = document.getElementById("my-form");
 const result = document.getElementById("result");
+// local storage structure
+// object
+//     guess
+//        mlsId: price, rank, winPrice
+//     trend
+//        lastFetchTime
+//        data
 input.addEventListener('input', (e) => {
   let value = e.target.value;
 
@@ -20,13 +27,8 @@ input.addEventListener("submit", function(event) {
   //  or use chrome.tabs.executeScript to inject code into the current page
   console.log("hhhhhh");
   console.log(mlsId);
-  const data = {[mlsId]: {price: price, status: 'Active'}};
-  console.log(data);
-  const cData = {
-    mlsId: mlsId,
-    price: price,
-  };
-  chrome.runtime.sendMessage({ type: "user_input", localData: data, cloudData: cData});
+  // const data = {[`guesses.${mlsId}`]: {price: price, status: 'Active'}};
+  chrome.runtime.sendMessage({ type: "user_input", data: {mlsId: mlsId, price: price}});
 });
 
 const tabs = ["current", "guessed", "trending"];
@@ -43,10 +45,8 @@ tabs.forEach(tab => {
       console.log("sending  guessss messsssss");
       chrome.runtime.sendMessage({ action: "loadGuess"});
     } else if (tab == "trending") {
-      console.log("sending  fetcccc trend messsssss");
-      chrome.runtime.sendMessage({ action: "fetchTrend"});
+        chrome.runtime.sendMessage({ action: "fetchTrend"});
     }
-
     // TODO: show the corresponding section
     console.log(`Switched to tab: ${tab}`);
   });
@@ -90,22 +90,23 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 
       let data;
       try {
-        data = await chrome.storage.sync.get(mlsId);
+        data = await chrome.storage.sync.get("guesses");
       } catch (e) {
         // Handle error that occurred during storage initialization.
         console.log(e);
       }
+      console.log("first get.....", data);
       if (msg.data.status == 'Sold') {
         setInputStatus(true);
         // the extra logic here to check against stored data
-        if (data && data[mlsId]) {
-          const status = data[mlsId].status;
+        if (data.guess && data.guesses?.[mlsId]) {
+          const status = data.guesses?.[mlsId].status;
           if (status == 'Sold') {
             // load result
             result.style.display = 'block';
-            document.getElementById("win").innerText = '&#127775 ' + data[mlsId].winPrice;
-            document.getElementById("price").innerText = '&#x1F4B0 ' + data[mlsId].price;
-            document.getElementById("rank").innerText = '&#127942 ' + data[mlsId].rank;
+            document.getElementById("win").innerText = '&#127775 ' + data.guesses?.[mlsId].winPrice;
+            document.getElementById("price").innerText = '&#x1F4B0 ' + data.guesses?.[mlsId].price;
+            document.getElementById("rank").innerText = '&#127942 ' + data.guesses?.[mlsId].rank;
           } else {
             // now result pending, wait cron job to update cloud & local
             result.style.display = 'None';
@@ -113,9 +114,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         }
       } else {
         setInputStatus(false);
-        if (data && data[mlsId]) {
-          console.log(data[mlsId].price);
-          document.getElementById("priceInput").value = data[mlsId].price;
+        if (data && data.guesses?.[mlsId]) {
+          console.log(data.guesses?.[mlsId].price);
+          document.getElementById("priceInput").value = data.guesses?.[mlsId].price;
         }
       }
     }
@@ -138,20 +139,22 @@ const getSearchLink = (mlsId) => {
 }
 
 const loadGuess= async () => {
-  const data = await chrome.storage.sync.get();
+
+  const data = await chrome.storage.sync.get("guesses");
   const guessList = document.getElementById("guessList");
+  console.log('load data...', data);
+  console.log('load guess...', data.guesses);
   
-  Object.keys(data).forEach(mlsId => {
-    console.log(data[mlsId]);
+  Object.keys(data.guesses).forEach(mlsId => {
     const listItem = document.createElement("li");
     const mlsLink = document.createElement("a");
     mlsLink.href = getSearchLink(mlsId);
     mlsLink.innerText = mlsId;
     mlsLink.target = "_blank";
 
-    let formattedLine = `💰 $${data[mlsId].price}`;
-    if (data[mlsId].rank) {
-      formattedLine += ` 🏆 $${data[mlsId].rank}`;
+    let formattedLine = `💰 $${data.guesses?.[mlsId].price}`;
+    if (data.guesses?.[mlsId].rank) {
+      formattedLine += ` 🏆 $${data.guesses?.[mlsId].rank}`;
     }
     // Append elements
     listItem.appendChild(mlsLink);
@@ -163,6 +166,7 @@ const loadGuess= async () => {
 const setTrend = (data) => {
   console.log(data);
   const trendList = document.getElementById("trendList");
+  trendList.innerHTML = "";
   Object.keys(data).forEach(mlsId => {
     const listItem = document.createElement("li");
     const mlsLink = document.createElement("a");
