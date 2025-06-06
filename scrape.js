@@ -29,16 +29,34 @@ input.addEventListener("submit", function(event) {
   chrome.runtime.sendMessage({ type: "user_input", localData: data, cloudData: cData});
 });
 
+const tabs = ["current", "guessed", "trending"];
+tabs.forEach(tab => {
+  const el = document.getElementById(`tab-${tab}`);
+  el.addEventListener("click", () => {
+    tabs.forEach(t => {
+      document.getElementById(`tab-${t}`).style.fontWeight = "normal";
+      document.getElementById(`${t}`).style.display = "None";
+    });
+    el.style.fontWeight = "bold";
+    document.getElementById(`${tab}`).style.display = "Block";
+    if (tab == "guessed") {
+      console.log("sending  guessss messsssss");
+      chrome.runtime.sendMessage({ action: "loadGuess"});
+    } else if (tab == "trending") {
+      console.log("sending  fetcccc trend messsssss");
+      chrome.runtime.sendMessage({ action: "fetchTrend"});
+    }
+
+    // TODO: show the corresponding section
+    console.log(`Switched to tab: ${tab}`);
+  });
+});
+
 const eligiblePages = 'https://www.zillow.com/homedetails/';
-const favPages = 'https://www.zillow.com/myzillow/favorites';
 
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const tab = tabs[0];  
-  if (tab.url.startsWith(favPages)) {
-    document.getElementById("favorate").style.display = 'block';
-    document.getElementById("eligible").style.display = 'none';
-    return;
-  } else if (!tab.url.startsWith(eligiblePages) ) {
+  if (!tab.url.startsWith(eligiblePages) ) {
     console.log("nottttttttt");
     document.getElementById("ineligible").style.display = 'block'; 
     document.getElementById("eligible").style.display = 'none';
@@ -49,7 +67,13 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   chrome.runtime.sendMessage({ action: "scrape", tabId: tab.id });
 
   chrome.runtime.onMessage.addListener(async(msg) => {
-    if (msg.action === "clicked") {
+    if (msg.action === "loadGuess") {
+      // this is not working
+      console.log('CCCaptureeee guessssss');
+      await loadGuess();
+    } else if (msg.action === "trendLoaded") {
+      setTrend(msg.data);
+    } else if (msg.action === "clicked") {
       console.log("Clickkkkkkkk2");
       setInputStatus(true);
     } else if (msg.action === "scrapedData") {
@@ -62,6 +86,8 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       console.log(typeof mlsId);
       console.log(mlsId);
       console.log(msg);
+      await loadGuess();
+
       let data;
       try {
         data = await chrome.storage.sync.get(mlsId);
@@ -101,6 +127,77 @@ const setInputStatus = (status) => {
     element.disabled = status;
   });
 }
+
+const getSearchLink = (mlsId) => {
+  const query = {};
+  query.filterState = {};
+  query.filterState.att = {};
+  query.filterState.att.value = mlsId;
+  const queryString = encodeURIComponent(JSON.stringify(query));
+  return "https://www.zillow.com/ca/?searchQueryState="+queryString;
+}
+
+const loadGuess= async () => {
+  const data = await chrome.storage.sync.get();
+  const guessList = document.getElementById("guessList");
+  
+  Object.keys(data).forEach(mlsId => {
+    console.log(data[mlsId]);
+    const listItem = document.createElement("li");
+    const mlsLink = document.createElement("a");
+    mlsLink.href = getSearchLink(mlsId);
+    mlsLink.innerText = mlsId;
+    mlsLink.target = "_blank";
+
+    let formattedLine = `💰 $${data[mlsId].price}`;
+    if (data[mlsId].rank) {
+      formattedLine += ` 🏆 $${data[mlsId].rank}`;
+    }
+    // Append elements
+    listItem.appendChild(mlsLink);
+    listItem.append(formattedLine);
+    guessList.appendChild(listItem); 
+  });
+}
+
+const setTrend = (data) => {
+  console.log(data);
+  const trendList = document.getElementById("trendList");
+  Object.keys(data).forEach(mlsId => {
+    const listItem = document.createElement("li");
+    const mlsLink = document.createElement("a");
+    mlsLink.href = getSearchLink(mlsId);
+    mlsLink.innerText = mlsId;
+    mlsLink.target = "_blank";
+    const time = shortTimeAgo(data[mlsId].lastAcessTime);
+    let formattedLine = `🔥 ${data[mlsId].accessCnt} acc 🕐 ${time}`;
+    listItem.appendChild(mlsLink);
+    listItem.append(formattedLine);
+    trendList.appendChild(listItem);
+  });
+}
+
+const shortTimeAgo = (timestamp) => {
+  const now = Date.now();
+  const diff = now - timestamp;
+
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(diff / (60 * 1000));
+  const hours = Math.floor(diff / (60 * 60 * 1000));
+  const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+  const weeks = Math.floor(days / 7);
+  const months = Math.floor(days / 30);
+  const years = Math.floor(days / 365);
+
+  if (seconds < 60) return `${seconds}s ago`;
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  if (weeks < 5) return `${weeks}w ago`;
+  if (months < 12) return `${months}mo ago`;
+  return `${years}y ago`;
+}
+
 
 // // below are pushing testing; not working
 // const SERVER_PUBLIC_KEY = 'BJ5LMVi-xpiHQs5nS5fXbWFdG9oijXK5rUb5vdSG-VqFQwayPAO3Bu_4aKw9PRbAnVTF14HQGQJvv1R0z0j4cF8';

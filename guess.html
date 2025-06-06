@@ -1,28 +1,40 @@
 <html>
   <body>
     <div id="ineligible" style="display: none; width: 100px">Try on Zillow home detail pages</div>
-    <div id="favorate" style="display: none; width: 100px">Check &#x1F4B0 for your estimates</div>
     <div id="eligible">
-      <div id="h1s">Loading...</div>
-      <div id="price"></div>
-      <div id="mlsId"></div>
-      <form id="my-form">
-        <div style="display: flex; align-items: center;">
-          <span>&#x1F4B0</span>
-          <input 
-            type="text" 
-            id="priceInput" 
-            placeholder="Enter your guess..." 
-            style="width: 80px;"
-            disabled=true
-          />
+      <div id="current" style="display: block;">
+        <div id="h1s">Loading...</div>
+        <div id="price"></div>
+        <div id="mlsId"></div>
+        <form id="my-form">
+          <div style="display: flex; align-items: center;">
+            <span>&#x1F4B0</span>
+            <input 
+              type="text" 
+              id="priceInput" 
+              placeholder="Enter your guess..." 
+              style="width: 80px;"
+              disabled=true
+            />
+          </div>
+          <button type="submit" disabled=true>Submit</button>
+        </form>
+        <div id="result" style="display: none">
+            <div id="win">&#127775</div>
+            <div id="guess">&#x1F4B0</div>
+            <div id="rank">&#127942</div>
         </div>
-        <button type="submit" disabled=true>Submit</button>
-      </form>
-      <div id="result" style="display: none">
-          <div id="win">&#127775</div>
-          <div id="guess">&#x1F4B0</div>
-          <div id="rank">&#127942</div>
+      </div>
+      <div id="guessed" style="display: none; width: 100px">
+        <ul id="guessList" style="margin: 0; padding-left: 0; list-style-position: inside;"></ul>
+      </div>
+      <div id="trending" style="display: none; width: 100px">
+        <ul id="trendList" style="margin: 0; padding-left: 0; list-style-position: inside;"></ul>  
+      </div>
+      <div id="tab-bar">
+        <div id="tab-current" style="cursor: pointer; font-weight: bold">Current</div>
+        <div id="tab-guessed" style="cursor: pointer;">Guessed</div>
+        <div id="tab-trending" style="cursor: pointer;">Trending</div>
       </div>
     </div>
     <script src="scrape.js" type="module"></script>

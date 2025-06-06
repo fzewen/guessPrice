@@ -24,7 +24,7 @@ chrome.action.onClicked.addListener((tab) => {
   chrome.runtime.sendMessage({ action: "clicked"});
 });
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
   if (msg.action === "scrape") {
     chrome.scripting.executeScript({
       target: { tabId: msg.tabId },
@@ -42,8 +42,28 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // saveGuess(userId, data);
     // Do something with the input value (e.g., send it to a server)
     console.log("Received input:", data);
+  } else if (msg.action === "fetchTrend") {
+    console.log("sending fetcccc trend messsssss");
+    await loadTrend();
   }
 });
+
+
+async function loadTrend() {
+  const params = new URLSearchParams();
+  params.append('userId', signInuserId);
+  const url = `https://us-central1-guessprice-a08ba.cloudfunctions.net/fetchTop?${params.toString()}`;
+  // const url = `http://127.0.0.1:5001/guessprice-a08ba/us-central1/fetchTop?${params.toString()}`;
+  console.log(url);
+  fetch(url)
+  .then(async response => {
+    const data = await response.json();
+    chrome.runtime.sendMessage({ action: "trendLoaded", data});
+  })
+  .catch(error => {
+    console.error('Fetch error:', error);
+  });
+}
 
 // This will only load active case
 // server will return sold case within them
@@ -111,9 +131,9 @@ function scrapePageInfo() {
 
     spans.forEach(span => {
       const text = span.textContent.trim();
-      console.log(text);
-      console.log(text.startsWith("MLS#:"));
-      console.log(text.includes("MLS#"));
+      // console.log(text);
+      // console.log(text.startsWith("MLS#:"));
+      // console.log(text.includes("MLS#"));
       if (text.startsWith("MLS#:") || text.includes("MLS#")) {
         console.log("innn");
         const match = text.match(/\d{6,}/); // Looks for 'ML' followed by 6+ digits
@@ -144,16 +164,22 @@ function scrapePageInfo() {
 chrome.runtime.onInstalled.addListener(() => {
   // fire per half day
   chrome.alarms.create("pollServer", { periodInMinutes: 720 });
+
+  // fire each hour
+  chrome.alarms.create("pollTrend", { periodInMinutes: 60 });
 });
 
 chrome.runtime.onStartup.addListener(() => {
   // fire on chrome
   chrome.alarms.create("pollServer");
+  chrome.alarms.create("pollTrend");
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "pollServer") {
     loadGuess();
+  } else if (alarm.name === "pollTrend") {
+    loadTrend();
   }
 });
 
