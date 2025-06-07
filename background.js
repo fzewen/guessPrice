@@ -1,3 +1,11 @@
+// local storage structure
+// object
+//     guess
+//        mlsId: price, rank, winPrice, url
+//     trend
+//        lastFetchTime
+//        data
+
 let signInuserId;
 // how this get trigger each login and logout
 chrome.identity.getProfileUserInfo((userInfo) => {

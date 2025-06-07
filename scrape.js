@@ -1,13 +1,7 @@
 const input = document.getElementById('my-form');
 const result = document.getElementById('result');
 let url;
-// local storage structure
-// object
-//     guess
-//        mlsId: price, rank, winPrice
-//     trend
-//        lastFetchTime
-//        data
+
 input.addEventListener('input', (e) => {
   let value = e.target.value;
 
@@ -133,24 +127,70 @@ const getSearchLink = (mlsId) => {
 const loadGuess = async () => {
   const data = await chrome.storage.sync.get('guesses');
   const guessList = document.getElementById('guessList');
+  let pagination = document.getElementById('pagination');
+
+  // Check if pagination already exists
+  if (!pagination) {
+    pagination = document.createElement('div');
+    pagination.id = 'pagination';
+    pagination.style.marginTop = '10px';
+    pagination.style.textAlign = 'center';
+    pagination.style.position = 'relative'; // Position relative to the guessList container
+    pagination.style.backgroundColor = '#fff'; // Optional: Background for better visibility
+    pagination.style.padding = '5px';
+    pagination.style.boxShadow = '0px 0px 5px rgba(0, 0, 0, 0.2)';
+    guessList.parentNode.appendChild(pagination); // Append only if it doesn't exist
+  }
+
   guessList.innerHTML = '';
+  pagination.innerHTML = '';
 
-  Object.keys(data.guesses).forEach((mlsId) => {
-    const listItem = document.createElement('li');
-    const mlsLink = document.createElement('a');
-    mlsLink.href = data.guesses?.[mlsId]?.url ?? getSearchLink(mlsId);
-    mlsLink.innerText = mlsId;
-    mlsLink.target = '_blank';
+  const guesses = Object.keys(data.guesses);
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(guesses.length / itemsPerPage);
 
-    let formattedLine = `💰 $${data.guesses?.[mlsId].price}`;
-    if (data.guesses?.[mlsId].rank) {
-      formattedLine += ` 🏆 $${data.guesses?.[mlsId].rank}`;
+  const renderPage = (page) => {
+    guessList.innerHTML = '';
+    const start = (page - 1) * itemsPerPage;
+    const end = Math.min(start + itemsPerPage, guesses.length);
+
+    for (let i = start; i < end; i++) {
+      const mlsId = guesses[i];
+      const listItem = document.createElement('li');
+      const mlsLink = document.createElement('a');
+      mlsLink.href = data.guesses?.[mlsId]?.url ?? getSearchLink(mlsId);
+      mlsLink.innerText = mlsId;
+      mlsLink.target = '_blank';
+
+      let formattedLine = `💰 $${data.guesses?.[mlsId].price}`;
+      if (data.guesses?.[mlsId].rank) {
+        formattedLine += ` 🏆 ${data.guesses?.[mlsId].rank}`;
+      }
+
+      listItem.appendChild(mlsLink);
+      listItem.append(` ${formattedLine}`);
+      guessList.appendChild(listItem);
     }
-    // Append elements
-    listItem.appendChild(mlsLink);
-    listItem.append(formattedLine);
-    guessList.appendChild(listItem);
-  });
+  };
+
+  const renderPagination = () => {
+    pagination.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+      const pageButton = document.createElement('button');
+      pageButton.innerText = i;
+      pageButton.style.margin = '0 5px';
+      pageButton.style.cursor = 'pointer';
+      pageButton.addEventListener('click', () => renderPage(i));
+      pagination.appendChild(pageButton);
+    }
+  };
+
+  if (guesses.length > 0) {
+    renderPage(1);
+    if (totalPages > 1) {
+      renderPagination();
+    }
+  }
 };
 
 const setTrend = (data) => {
