@@ -1,0 +1,197 @@
+body {
+  font-family: sans-serif;
+  padding: 8px;
+  margin: 0;
+  width: 240px;
+  height: 400px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+#ineligible,
+#favorate {
+  display: none;
+  width: 200px;
+}
+
+#eligible {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+#priceInput {
+  width: 140px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+#current {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Increased spacing between elements */
+  align-items: center; /* Center elements horizontally */
+  padding: 12px 0; /* Add vertical padding */
+}
+
+#h1s {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 1.05rem;
+  margin-bottom: 6px;
+  color: #1976d2;
+  text-align: center;
+}
+
+#mlsId {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px; /* Increased space between form elements */
+  margin-top: 8px;
+  align-items: center; /* Center form elements */
+}
+
+.form-group {
+  display: flex;
+  flex-direction: row;
+  gap: 8px; /* More space between icon and input */
+  align-items: center;
+}
+
+.form-group span {
+  font-size: 1.4rem;
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.button {
+  width: 60%;
+  height: 20px;
+  margin-top: 5px;
+}
+
+form button[type='submit'] {
+  border-radius: 16px;
+  background-color: #1976d2;
+  color: #fff;
+  border: none;
+  padding: 0;
+  height: 32px;
+  width: 100%;
+  font-size: 1rem;
+  transition: background 0.2s;
+  cursor: pointer;
+  margin-top: 14px; /* Increased spacing above the button */
+}
+
+form button[type='submit']:hover:enabled {
+  background-color: #1565c0;
+}
+
+#tab-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  border-top: 1px solid #ddd;
+  background: #fafafa;
+  height: 40px;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+#tab-bar > div {
+  flex: 1 1 0;
+  text-align: center;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 1rem;
+  user-select: none;
+}
+
+#tab-bar > div.active {
+  font-weight: bold;
+  color: #1976d2;
+  border-bottom: 2px solid #1976d2;
+  background: #e3f2fd;
+}
+
+/* Style for guessed and trending tab panels */
+#guessed.tab-panel,
+#trending.tab-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px;
+  gap: 14px;
+  background: #f5faff;
+  min-height: 200px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.06);
+}
+
+#guessed.tab-panel ul,
+#trending.tab-panel ul {
+  width: 100%;
+  /* max-width: 200px; */
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(25, 118, 210, 0.04);
+  padding: 4px 0;
+  margin: 0;
+  list-style: none;
+}
+
+#guessed.tab-panel ul li,
+#trending.tab-panel ul li {
+  padding: 6px 12px;
+  color: #1976d2;
+  border-bottom: 1px solid #e3f2fd;
+  font-size: 1rem;
+  text-align: left;
+  width: 100%;
+}
+
+#guessed.tab-panel ul li:last-child,
+#trending.tab-panel ul li:last-child {
+  border-bottom: none;
+}
+
+#guessed.tab-panel .subtitle,
+#trending.tab-panel .subtitle {
+  color: #1976d2;
+  font-weight: bold;
+  font-size: 1.08rem;
+  margin-bottom: 8px;
+  text-align: center;
+}
