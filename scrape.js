@@ -1,5 +1,6 @@
 const input = document.getElementById('my-form');
 const result = document.getElementById('result');
+let url;
 // local storage structure
 // object
 //     guess
@@ -23,20 +24,14 @@ input.addEventListener('submit', function (event) {
   event.preventDefault(); // Prevent default form submission
   const price = document.getElementById('priceInput').value;
   const mlsId = document.getElementById('mlsId').innerText;
-  //  Here, you can use chrome.runtime.sendMessage to send the input to your background script
-  //  or use chrome.tabs.executeScript to inject code into the current page
-  console.log('hhhhhh');
-  console.log(mlsId);
-  const data = { [mlsId]: { price: price, status: 'Active' } };
-  console.log(data);
-  const cData = {
+  const data = {
     mlsId: mlsId,
     price: price,
+    url: url,
   };
   chrome.runtime.sendMessage({
     type: 'user_input',
-    localData: data,
-    cloudData: cData,
+    data,
   });
 });
 
@@ -51,13 +46,10 @@ tabs.forEach((tab) => {
     el.style.fontWeight = 'bold';
     document.getElementById(`${tab}`).style.display = 'Block';
     if (tab == 'guessed') {
-      console.log('sending  guessss messsssss');
       await loadGuess();
     } else if (tab == 'trending') {
       chrome.runtime.sendMessage({ action: 'fetchTrend' });
     }
-    // TODO: show the corresponding section
-    console.log(`Switched to tab: ${tab}`);
   });
 });
 
@@ -65,21 +57,19 @@ const eligiblePages = 'https://www.zillow.com/homedetails/';
 
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const tab = tabs[0];
+  url = tab.url;
   if (!tab.url.startsWith(eligiblePages)) {
-    console.log('nottttttttt');
     document.getElementById('ineligible').style.display = 'block';
     document.getElementById('eligible').style.display = 'none';
     return;
   }
   document.getElementById('eligible').style.display = 'block';
-  console.log('scrapppppppppp');
   chrome.runtime.sendMessage({ action: 'scrape', tabId: tab.id });
 
   chrome.runtime.onMessage.addListener(async (msg) => {
     if (msg.action === 'trendLoaded') {
       setTrend(msg.data);
     } else if (msg.action === 'clicked') {
-      console.log('Clickkkkkkkk2');
       setInputStatus(true);
     } else if (msg.action === 'scrapedData') {
       document.getElementById('price').innerText = msg.data.price;
@@ -88,19 +78,13 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 
       const loads = document.getElementById('h1s');
       loads.innerHTML = '';
-      console.log(typeof mlsId);
-      console.log(mlsId);
-      console.log(msg);
-      // await loadGuess();
 
       let data;
       try {
         data = await chrome.storage.sync.get('guesses');
       } catch (e) {
         // Handle error that occurred during storage initialization.
-        console.log(e);
       }
-      console.log('first get.....', data);
       if (msg.data.status == 'Sold') {
         setInputStatus(true);
         // the extra logic here to check against stored data
@@ -123,7 +107,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       } else {
         setInputStatus(false);
         if (data && data.guesses?.[mlsId]) {
-          console.log(data.guesses?.[mlsId].price);
           document.getElementById('priceInput').value =
             data.guesses?.[mlsId].price;
         }
@@ -151,13 +134,11 @@ const loadGuess = async () => {
   const data = await chrome.storage.sync.get('guesses');
   const guessList = document.getElementById('guessList');
   guessList.innerHTML = '';
-  console.log('load data...', data);
-  console.log('load guess...', data.guesses);
 
   Object.keys(data.guesses).forEach((mlsId) => {
     const listItem = document.createElement('li');
     const mlsLink = document.createElement('a');
-    mlsLink.href = getSearchLink(mlsId);
+    mlsLink.href = data.guesses?.[mlsId]?.url ?? getSearchLink(mlsId);
     mlsLink.innerText = mlsId;
     mlsLink.target = '_blank';
 
@@ -173,7 +154,6 @@ const loadGuess = async () => {
 };
 
 const setTrend = (data) => {
-  console.log(data);
   const trendList = document.getElementById('trendList');
   trendList.innerHTML = ''; // Clear previous entries if needed
   Object.keys(data).forEach((mlsId) => {
@@ -181,7 +161,7 @@ const setTrend = (data) => {
 
     // First line: MLS link
     const mlsLink = document.createElement('a');
-    mlsLink.href = getSearchLink(mlsId);
+    mlsLink.href = data[mlsId].url ?? getSearchLink(mlsId);
     mlsLink.innerText = mlsId;
     mlsLink.target = '_blank';
 
@@ -222,39 +202,3 @@ const shortTimeAgo = (timestamp) => {
   if (months < 12) return `${months}mo ago`;
   return `${years}y ago`;
 };
-
-// // below are pushing testing; not working
-// const SERVER_PUBLIC_KEY = 'BJ5LMVi-xpiHQs5nS5fXbWFdG9oijXK5rUb5vdSG-VqFQwayPAO3Bu_4aKw9PRbAnVTF14HQGQJvv1R0z0j4cF8';
-
-// async function subscribeToPush() {
-//   if (!('serviceWorker' in navigator)) {
-//     console.error('Service workers are not supported.');
-//     return;
-//   }
-
-//   try {
-//     const registration = await navigator.serviceWorker.register('background.js');
-//     console.log('SW registered:', registration);
-
-//     const ready = await navigator.serviceWorker.ready;
-//     const subscription = await ready.pushManager.subscribe({
-//       userVisibleOnly: true,
-//       applicationServerKey: urlBase64ToUint8Array(SERVER_PUBLIC_KEY)
-//     });
-
-//     console.log(`Subscribed: ${JSON.stringify(subscription,0,2)}`);
-
-//     // Send `subscription` to your backend to save
-//   } catch (err) {
-//     console.error('Subscribe error:', err);
-//   }
-// }
-
-// function urlBase64ToUint8Array(base64String) {
-//   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-//   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-//   const raw = atob(base64);
-//   return new Uint8Array([...raw].map(char => char.charCodeAt(0)));
-// }
-
-// subscribeToPush();
