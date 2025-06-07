@@ -27,16 +27,10 @@ input.addEventListener('submit', function (event) {
   //  or use chrome.tabs.executeScript to inject code into the current page
   console.log('hhhhhh');
   console.log(mlsId);
-  const data = { [mlsId]: { price: price, status: 'Active' } };
-  console.log(data);
-  const cData = {
-    mlsId: mlsId,
-    price: price,
-  };
+  // const data = {[`guesses.${mlsId}`]: {price: price, status: 'Active'}};
   chrome.runtime.sendMessage({
     type: 'user_input',
-    localData: data,
-    cloudData: cData,
+    data: { mlsId: mlsId, price: price },
   });
 });
 
