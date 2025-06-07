@@ -1,19 +1,24 @@
 <html>
+  <head>
+    <title>Guess the Price</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
   <body>
-    <div id="ineligible" style="display: none; width: 100px">Try on Zillow home detail pages</div>
-    <div id="eligible">
-      <div id="current" style="display: block;">
+    <div id="ineligible" class="tab-content">Try on Zillow home detail pages</div>
+    <div id="eligible" class="tab-content">
+      <div id="current" class="tab-panel">
         <div id="h1s">Loading...</div>
-        <div id="price"></div>
+        <div id="price" class="subtitle"></div>
         <div id="mlsId"></div>
         <form id="my-form">
-          <div style="display: flex; align-items: center;">
+          <div class="form-group">
             <span>&#x1F4B0</span>
             <input 
               type="text" 
               id="priceInput" 
               placeholder="Enter your guess..." 
-              style="width: 80px;"
+              style="width: 160px;"
               disabled=true
             />
           </div>
@@ -25,16 +30,16 @@
             <div id="rank">&#127942</div>
         </div>
       </div>
-      <div id="guessed" style="display: none; width: 100px">
-        <ul id="guessList" style="margin: 0; padding-left: 0; list-style-position: inside;"></ul>
+      <div id="guessed" class="tab-panel" style="display: none">
+        <ul id="guessList"></ul>
       </div>
-      <div id="trending" style="display: none; width: 100px">
-        <ul id="trendList" style="margin: 0; padding-left: 0; list-style-position: inside;"></ul>  
+      <div id="trending" class="tab-panel" style="display: none">
+        <ul id="trendList"></ul>  
       </div>
-      <div id="tab-bar">
-        <div id="tab-current" style="cursor: pointer; font-weight: bold">Current</div>
-        <div id="tab-guessed" style="cursor: pointer;">Guessed</div>
-        <div id="tab-trending" style="cursor: pointer;">Trending</div>
+      <div id="tab-bar" class="tab-bar">
+        <div id="tab-current" class="tab" style="cursor: pointer; font-weight: bold">Current</div>
+        <div id="tab-guessed" class="tab" style="cursor: pointer;">Guessed</div>
+        <div id="tab-trending" class="tab" style="cursor: pointer;">Trending</div>
       </div>
     </div>
     <script src="scrape.js" type="module"></script>

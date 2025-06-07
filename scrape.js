@@ -1,5 +1,5 @@
-const input = document.getElementById("my-form");
-const result = document.getElementById("result");
+const input = document.getElementById('my-form');
+const result = document.getElementById('result');
 // local storage structure
 // object
 //     guess
@@ -19,33 +19,42 @@ input.addEventListener('input', (e) => {
   e.target.value = formatted;
 });
 
-input.addEventListener("submit", function(event) {
+input.addEventListener('submit', function (event) {
   event.preventDefault(); // Prevent default form submission
-  const price = document.getElementById("priceInput").value;
-  const mlsId = document.getElementById("mlsId").innerText;
+  const price = document.getElementById('priceInput').value;
+  const mlsId = document.getElementById('mlsId').innerText;
   //  Here, you can use chrome.runtime.sendMessage to send the input to your background script
   //  or use chrome.tabs.executeScript to inject code into the current page
-  console.log("hhhhhh");
+  console.log('hhhhhh');
   console.log(mlsId);
-  // const data = {[`guesses.${mlsId}`]: {price: price, status: 'Active'}};
-  chrome.runtime.sendMessage({ type: "user_input", data: {mlsId: mlsId, price: price}});
+  const data = { [mlsId]: { price: price, status: 'Active' } };
+  console.log(data);
+  const cData = {
+    mlsId: mlsId,
+    price: price,
+  };
+  chrome.runtime.sendMessage({
+    type: 'user_input',
+    localData: data,
+    cloudData: cData,
+  });
 });
 
-const tabs = ["current", "guessed", "trending"];
-tabs.forEach(tab => {
+const tabs = ['current', 'guessed', 'trending'];
+tabs.forEach((tab) => {
   const el = document.getElementById(`tab-${tab}`);
-  el.addEventListener("click", async () => {
-    tabs.forEach(t => {
-      document.getElementById(`tab-${t}`).style.fontWeight = "normal";
-      document.getElementById(`${t}`).style.display = "None";
+  el.addEventListener('click', async () => {
+    tabs.forEach((t) => {
+      document.getElementById(`tab-${t}`).style.fontWeight = 'normal';
+      document.getElementById(`${t}`).style.display = 'None';
     });
-    el.style.fontWeight = "bold";
-    document.getElementById(`${tab}`).style.display = "Block";
-    if (tab == "guessed") {
-      console.log("sending  guessss messsssss");
+    el.style.fontWeight = 'bold';
+    document.getElementById(`${tab}`).style.display = 'Block';
+    if (tab == 'guessed') {
+      console.log('sending  guessss messsssss');
       await loadGuess();
-    } else if (tab == "trending") {
-        chrome.runtime.sendMessage({ action: "fetchTrend"});
+    } else if (tab == 'trending') {
+      chrome.runtime.sendMessage({ action: 'fetchTrend' });
     }
     // TODO: show the corresponding section
     console.log(`Switched to tab: ${tab}`);
@@ -55,30 +64,30 @@ tabs.forEach(tab => {
 const eligiblePages = 'https://www.zillow.com/homedetails/';
 
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-  const tab = tabs[0];  
-  if (!tab.url.startsWith(eligiblePages) ) {
-    console.log("nottttttttt");
-    document.getElementById("ineligible").style.display = 'block'; 
-    document.getElementById("eligible").style.display = 'none';
+  const tab = tabs[0];
+  if (!tab.url.startsWith(eligiblePages)) {
+    console.log('nottttttttt');
+    document.getElementById('ineligible').style.display = 'block';
+    document.getElementById('eligible').style.display = 'none';
     return;
-  } 
-  document.getElementById("eligible").style.display = 'block';
-  console.log("scrapppppppppp");
-  chrome.runtime.sendMessage({ action: "scrape", tabId: tab.id });
+  }
+  document.getElementById('eligible').style.display = 'block';
+  console.log('scrapppppppppp');
+  chrome.runtime.sendMessage({ action: 'scrape', tabId: tab.id });
 
-  chrome.runtime.onMessage.addListener(async(msg) => {
-    if (msg.action === "trendLoaded") {
+  chrome.runtime.onMessage.addListener(async (msg) => {
+    if (msg.action === 'trendLoaded') {
       setTrend(msg.data);
-    } else if (msg.action === "clicked") {
-      console.log("Clickkkkkkkk2");
+    } else if (msg.action === 'clicked') {
+      console.log('Clickkkkkkkk2');
       setInputStatus(true);
-    } else if (msg.action === "scrapedData") {
-      document.getElementById("price").innerText = msg.data.price;
+    } else if (msg.action === 'scrapedData') {
+      document.getElementById('price').innerText = msg.data.price;
       const mlsId = msg.data.mlsId;
-      document.getElementById("mlsId").innerText = mlsId;
+      document.getElementById('mlsId').innerText = mlsId;
 
-      const loads = document.getElementById("h1s");
-      loads.innerHTML = "";
+      const loads = document.getElementById('h1s');
+      loads.innerHTML = '';
       console.log(typeof mlsId);
       console.log(mlsId);
       console.log(msg);
@@ -86,12 +95,12 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 
       let data;
       try {
-        data = await chrome.storage.sync.get("guesses");
+        data = await chrome.storage.sync.get('guesses');
       } catch (e) {
         // Handle error that occurred during storage initialization.
         console.log(e);
       }
-      console.log("first get.....", data);
+      console.log('first get.....', data);
       if (msg.data.status == 'Sold') {
         setInputStatus(true);
         // the extra logic here to check against stored data
@@ -100,9 +109,12 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (status == 'Sold') {
             // load result
             result.style.display = 'block';
-            document.getElementById("win").innerText = '&#127775 ' + data.guesses?.[mlsId].winPrice;
-            document.getElementById("price").innerText = '&#x1F4B0 ' + data.guesses?.[mlsId].price;
-            document.getElementById("rank").innerText = '&#127942 ' + data.guesses?.[mlsId].rank;
+            document.getElementById('win').innerText =
+              '&#127775 ' + data.guesses?.[mlsId].winPrice;
+            document.getElementById('price').innerText =
+              '&#x1F4B0 ' + data.guesses?.[mlsId].price;
+            document.getElementById('rank').innerText =
+              '&#127942 ' + data.guesses?.[mlsId].rank;
           } else {
             // now result pending, wait cron job to update cloud & local
             result.style.display = 'None';
@@ -112,7 +124,8 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         setInputStatus(false);
         if (data && data.guesses?.[mlsId]) {
           console.log(data.guesses?.[mlsId].price);
-          document.getElementById("priceInput").value = data.guesses?.[mlsId].price;
+          document.getElementById('priceInput').value =
+            data.guesses?.[mlsId].price;
         }
       }
     }
@@ -120,10 +133,10 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 });
 
 const setInputStatus = (status) => {
-  Array.from(input.elements).forEach(element => {
+  Array.from(input.elements).forEach((element) => {
     element.disabled = status;
   });
-}
+};
 
 const getSearchLink = (mlsId) => {
   const query = {};
@@ -131,23 +144,22 @@ const getSearchLink = (mlsId) => {
   query.filterState.att = {};
   query.filterState.att.value = mlsId;
   const queryString = encodeURIComponent(JSON.stringify(query));
-  return "https://www.zillow.com/ca/?searchQueryState="+queryString;
-}
+  return 'https://www.zillow.com/ca/?searchQueryState=' + queryString;
+};
 
-const loadGuess= async () => {
-
-  const data = await chrome.storage.sync.get("guesses");
-  const guessList = document.getElementById("guessList");
-  guessList.innerHTML = "";
+const loadGuess = async () => {
+  const data = await chrome.storage.sync.get('guesses');
+  const guessList = document.getElementById('guessList');
+  guessList.innerHTML = '';
   console.log('load data...', data);
   console.log('load guess...', data.guesses);
-  
-  Object.keys(data.guesses).forEach(mlsId => {
-    const listItem = document.createElement("li");
-    const mlsLink = document.createElement("a");
+
+  Object.keys(data.guesses).forEach((mlsId) => {
+    const listItem = document.createElement('li');
+    const mlsLink = document.createElement('a');
     mlsLink.href = getSearchLink(mlsId);
     mlsLink.innerText = mlsId;
-    mlsLink.target = "_blank";
+    mlsLink.target = '_blank';
 
     let formattedLine = `💰 $${data.guesses?.[mlsId].price}`;
     if (data.guesses?.[mlsId].rank) {
@@ -156,27 +168,39 @@ const loadGuess= async () => {
     // Append elements
     listItem.appendChild(mlsLink);
     listItem.append(formattedLine);
-    guessList.appendChild(listItem); 
+    guessList.appendChild(listItem);
   });
-}
+};
 
 const setTrend = (data) => {
   console.log(data);
-  const trendList = document.getElementById("trendList");
-  trendList.innerHTML = "";
-  Object.keys(data).forEach(mlsId => {
-    const listItem = document.createElement("li");
-    const mlsLink = document.createElement("a");
+  const trendList = document.getElementById('trendList');
+  trendList.innerHTML = ''; // Clear previous entries if needed
+  Object.keys(data).forEach((mlsId) => {
+    const listItem = document.createElement('li');
+
+    // First line: MLS link
+    const mlsLink = document.createElement('a');
     mlsLink.href = getSearchLink(mlsId);
     mlsLink.innerText = mlsId;
-    mlsLink.target = "_blank";
-    const time = shortTimeAgo(data[mlsId].lastAcessTime);
-    let formattedLine = `🔥 ${data[mlsId].accessCnt} acc 🕐 ${time}`;
+    mlsLink.target = '_blank';
+
+    // Second line: formatted info
+    const infoDiv = document.createElement('div');
+    infoDiv.textContent = `🔥 ${data[mlsId].accessCnt} acc 🕐 ${shortTimeAgo(
+      data[mlsId].lastAcessTime
+    )}`;
+    infoDiv.style.fontSize = '1em';
+    infoDiv.style.color = '#1976d2';
+    infoDiv.style.marginTop = '2px';
+
     listItem.appendChild(mlsLink);
-    listItem.append(formattedLine);
+    listItem.appendChild(document.createElement('br')); // Line break
+    listItem.appendChild(infoDiv);
+
     trendList.appendChild(listItem);
   });
-}
+};
 
 const shortTimeAgo = (timestamp) => {
   const now = Date.now();
@@ -197,8 +221,7 @@ const shortTimeAgo = (timestamp) => {
   if (weeks < 5) return `${weeks}w ago`;
   if (months < 12) return `${months}mo ago`;
   return `${years}y ago`;
-}
-
+};
 
 // // below are pushing testing; not working
 // const SERVER_PUBLIC_KEY = 'BJ5LMVi-xpiHQs5nS5fXbWFdG9oijXK5rUb5vdSG-VqFQwayPAO3Bu_4aKw9PRbAnVTF14HQGQJvv1R0z0j4cF8';
