@@ -25,6 +25,7 @@ input.addEventListener('submit', function (event) {
   event.preventDefault(); // Prevent default form submission
   const price = document.getElementById('priceInput').value;
   const mlsId = document.getElementById('mlsId').innerText;
+  const status = document.getElementById('status-text').innerText;
   if (price === '') {
     submitInfo.innerText = '❌ Please enter a price.';
     return;
@@ -33,6 +34,7 @@ input.addEventListener('submit', function (event) {
     mlsId: mlsId,
     price: price,
     url: curUrl,
+    status: status,
   };
   chrome.runtime.sendMessage({
     type: 'user_input',
@@ -87,6 +89,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 
       const loads = document.getElementById('h1s');
       loads.innerHTML = '';
+      updateStatus(msg.data.status);
 
       let data;
       try {
@@ -147,13 +150,7 @@ const loadGuess = async () => {
   // Check if pagination already exists
   if (!pagination) {
     pagination = document.createElement('div');
-    pagination.id = 'pagination';
-    pagination.style.marginTop = '10px';
-    pagination.style.textAlign = 'center';
-    pagination.style.position = 'relative'; // Position relative to the guessList container
-    pagination.style.backgroundColor = '#fff'; // Optional: Background for better visibility
-    pagination.style.padding = '5px';
-    pagination.style.boxShadow = '0px 0px 5px rgba(0, 0, 0, 0.2)';
+    pagination.id = 'pagination'; // Use CSS class for styling
     guessList.parentNode.appendChild(pagination); // Append only if it doesn't exist
   }
 
@@ -179,6 +176,23 @@ const loadGuess = async () => {
     for (let i = start; i < end; i++) {
       const mlsId = guesses[i];
       const listItem = document.createElement('li');
+      listItem.className = 'guess-item'; // Add a class for styling if needed
+
+      // Create the status pill
+      const statusPill = document.createElement('span');
+      statusPill.className = 'status-pill'; // Base class for the pill
+
+      // Update the status pill color and text using CSS classes
+      const status = data.guesses?.[mlsId]?.status || 'Unknown';
+      if (status === 'For sale') {
+        statusPill.classList.add('green');
+      } else if (status === 'Sold') {
+        statusPill.classList.add('red');
+      } else {
+        statusPill.classList.add('yellow');
+      }
+
+      // Create the MLS link
       const mlsLink = document.createElement('a');
       mlsLink.href = data.guesses?.[mlsId]?.url ?? getSearchLink(mlsId);
       mlsLink.innerText = mlsId;
@@ -189,6 +203,8 @@ const loadGuess = async () => {
         formattedLine += ` 🏆 ${data.guesses?.[mlsId].rank}`;
       }
 
+      // Append the status pill and MLS link to the list item
+      listItem.appendChild(statusPill);
       listItem.appendChild(mlsLink);
       listItem.append(` ${formattedLine}`);
       guessList.appendChild(listItem);
@@ -200,8 +216,7 @@ const loadGuess = async () => {
     for (let i = 1; i <= totalPages; i++) {
       const pageButton = document.createElement('button');
       pageButton.innerText = i;
-      pageButton.style.margin = '0 5px';
-      pageButton.style.cursor = 'pointer';
+      pageButton.className = 'pagination-button'; // Add a class for styling
       pageButton.addEventListener('click', () => renderPage(i));
       pagination.appendChild(pageButton);
     }
@@ -231,12 +246,10 @@ const setTrend = (data) => {
 
     // Second line: formatted info
     const infoDiv = document.createElement('div');
+    infoDiv.className = 'trend-info'; // Use CSS class for styling
     infoDiv.textContent = `🔥 ${data[mlsId].accessCnt} acc 🕐 ${shortTimeAgo(
       data[mlsId].lastAcessTime
     )}`;
-    infoDiv.style.fontSize = '1em';
-    infoDiv.style.color = '#1976d2';
-    infoDiv.style.marginTop = '2px';
 
     listItem.appendChild(mlsLink);
     listItem.appendChild(document.createElement('br')); // Line break
@@ -265,4 +278,22 @@ const shortTimeAgo = (timestamp) => {
   if (weeks < 5) return `${weeks}w ago`;
   if (months < 12) return `${months}mo ago`;
   return `${years}y ago`;
+};
+
+const updateStatus = (status) => {
+  const statusDot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+
+  // Update the status text
+  statusText.innerText = status;
+
+  // Update the color of the dot based on the status
+  statusDot.className = 'status-dot'; // Reset classes
+  if (status === 'For sale') {
+    statusDot.classList.add('green');
+  } else if (status === 'Sold') {
+    statusDot.classList.add('red');
+  } else {
+    statusDot.classList.add('yellow');
+  }
 };

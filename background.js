@@ -40,7 +40,7 @@ chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
     // This is not very efficient, unless a global storage to load once
     let data = await chrome.storage.sync.get('guesses');
     data.guesses = data.guesses || {};
-    data.guesses[updateData.mlsId] = { price: updateData.price, status: 'Active', url: updateData.url };
+    data.guesses[updateData.mlsId] = { price: updateData.price, status: updateData.status, url: updateData.url };
     chrome.storage.sync.set(data);
 
     updateData.userId = signInuserId;
