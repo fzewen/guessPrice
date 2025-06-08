@@ -1,6 +1,13 @@
 const input = document.getElementById('my-form');
 const result = document.getElementById('result');
-let url;
+const submitInfo = document.getElementById('submitInfo');
+const loadingIndicator = document.getElementById('loading-indicator');
+let curUrl;
+let curMlsId;
+
+input.addEventListener('click', () => {
+  submitInfo.innerText = '';
+});
 
 input.addEventListener('input', (e) => {
   let value = e.target.value;
@@ -18,15 +25,20 @@ input.addEventListener('submit', function (event) {
   event.preventDefault(); // Prevent default form submission
   const price = document.getElementById('priceInput').value;
   const mlsId = document.getElementById('mlsId').innerText;
+  if (price === '') {
+    submitInfo.innerText = '❌ Please enter a price.';
+    return;
+  }
   const data = {
     mlsId: mlsId,
     price: price,
-    url: url,
+    url: curUrl,
   };
   chrome.runtime.sendMessage({
     type: 'user_input',
     data,
   });
+  submitInfo.innerText = '✅ Guess submitted successfully!';
 });
 
 const tabs = ['current', 'guessed', 'trending'];
@@ -42,6 +54,8 @@ tabs.forEach((tab) => {
     if (tab == 'guessed') {
       await loadGuess();
     } else if (tab == 'trending') {
+      // Show the loading indicator and clear the trend list
+      loadingIndicator.style.display = 'block';
       chrome.runtime.sendMessage({ action: 'fetchTrend' });
     }
   });
@@ -51,7 +65,7 @@ const eligiblePages = 'https://www.zillow.com/homedetails/';
 
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const tab = tabs[0];
-  url = tab.url;
+  curUrl = tab.url;
   if (!tab.url.startsWith(eligiblePages)) {
     document.getElementById('ineligible').style.display = 'block';
     document.getElementById('eligible').style.display = 'none';
@@ -68,6 +82,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     } else if (msg.action === 'scrapedData') {
       document.getElementById('price').innerText = msg.data.price;
       const mlsId = msg.data.mlsId;
+      curMlsId = mlsId;
       document.getElementById('mlsId').innerText = mlsId;
 
       const loads = document.getElementById('h1s');
@@ -146,6 +161,13 @@ const loadGuess = async () => {
   pagination.innerHTML = '';
 
   const guesses = Object.keys(data.guesses);
+
+  // Move curMlsId to the front of the list if it exists
+  if (curMlsId && guesses.includes(curMlsId)) {
+    guesses.splice(guesses.indexOf(curMlsId), 1); // Remove curMlsId from its current position
+    guesses.unshift(curMlsId); // Add curMlsId to the beginning of the list
+  }
+
   const itemsPerPage = 8;
   const totalPages = Math.ceil(guesses.length / itemsPerPage);
 
@@ -194,6 +216,8 @@ const loadGuess = async () => {
 };
 
 const setTrend = (data) => {
+  // Hide the loading indicator
+  loadingIndicator.style.display = 'none';
   const trendList = document.getElementById('trendList');
   trendList.innerHTML = ''; // Clear previous entries if needed
   Object.keys(data).forEach((mlsId) => {

@@ -9,8 +9,8 @@
     <div id="eligible" class="tab-content">
       <div id="current" class="tab-panel">
         <div id="h1s">Loading...</div>
-        <div id="price" class="subtitle"></div>
         <div id="mlsId"></div>
+        <div id="price" class="subtitle"></div>
         <form id="my-form">
           <div class="form-group">
             <span>&#x1F4B0</span>
@@ -23,6 +23,7 @@
             />
           </div>
           <button type="submit" disabled=true>Submit</button>
+          <div id="submitInfo"></div>
         </form>
         <div id="result" style="display: none">
             <div id="win">&#127775</div>
@@ -33,8 +34,11 @@
       <div id="guessed" class="tab-panel" style="display: none">
         <ul id="guessList"></ul>
       </div>
-      <div id="trending" class="tab-panel" style="display: none">
-        <ul id="trendList"></ul>  
+      <div id="trending" class="tab-panel" style="display: none; position: relative;">
+        <div id="loading-indicator" class="loading-indicator" style="display: none;">
+          Loading...
+        </div>
+        <ul id="trendList"></ul>
       </div>
       <div id="tab-bar" class="tab-bar">
         <div id="tab-current" class="tab" style="cursor: pointer; font-weight: bold">Current</div>
