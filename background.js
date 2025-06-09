@@ -124,9 +124,11 @@ function updateGuess(data) {
 function scrapePageInfo() {
   let price = document.querySelector(`[data-testid="price"]`);
   const container = document.querySelector('[data-testid="listing-attribution-overview"]');
-  const statusElement = document.querySelector('[data-testid="chip-status-pill"] span:last-child');
-  const status = statusElement?.innerText.trim();
-
+  const statusElements = document.querySelector('[data-testid="chip-status-pill"] span');
+  let status = 'Unknown';
+  if (statusElements.length > 1) {
+    status = statusElements[1].textContent.trim();
+  }
   let mlsId = null;
 
   if (container) {

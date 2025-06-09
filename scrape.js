@@ -165,7 +165,7 @@ const loadGuess = async () => {
     guesses.unshift(curMlsId); // Add curMlsId to the beginning of the list
   }
 
-  const itemsPerPage = 8;
+  const itemsPerPage = 5;
   const totalPages = Math.ceil(guesses.length / itemsPerPage);
 
   const renderPage = (page) => {
@@ -176,19 +176,19 @@ const loadGuess = async () => {
     for (let i = start; i < end; i++) {
       const mlsId = guesses[i];
       const listItem = document.createElement('li');
-      listItem.className = 'guess-item'; // Add a class for styling if needed
+      listItem.className = 'guess-item'; // Add a class for styling
 
       // Create the status pill
       const statusPill = document.createElement('span');
       statusPill.className = 'status-pill'; // Base class for the pill
 
-      // Update the status pill color and text using CSS classes
+      // Update the status pill color using CSS classes
       const status = data.guesses?.[mlsId]?.status || 'Unknown';
       if (status === 'For sale') {
         statusPill.classList.add('green');
       } else if (status === 'Sold') {
         statusPill.classList.add('red');
-      } else {
+      } else  {
         statusPill.classList.add('yellow');
       }
 
@@ -198,15 +198,19 @@ const loadGuess = async () => {
       mlsLink.innerText = mlsId;
       mlsLink.target = '_blank';
 
+      // Create the formatted line element
+      const formattedLineElement = document.createElement('span');
       let formattedLine = `💰 $${data.guesses?.[mlsId].price}`;
       if (data.guesses?.[mlsId].rank) {
         formattedLine += ` 🏆 ${data.guesses?.[mlsId].rank}`;
       }
+      formattedLineElement.innerText = formattedLine;
 
-      // Append the status pill and MLS link to the list item
+      // Append the status pill, MLS link, and formatted line to the list item
       listItem.appendChild(statusPill);
       listItem.appendChild(mlsLink);
-      listItem.append(` ${formattedLine}`);
+      listItem.appendChild(document.createElement('br')); // Add a line break
+      listItem.appendChild(formattedLineElement);
       guessList.appendChild(listItem);
     }
   };
