@@ -124,18 +124,29 @@ function updateGuess(data) {
 
 function scrapePageInfo() {
   let price = document.querySelector(`[data-testid="price"]`);
-  const container = document.querySelector('[data-testid="listing-attribution-overview"]');
-  const statusElements = document.querySelectorAll('[data-testid="chip-status-pill"] span');
+  const mlsContainer = document.querySelector('[data-testid="listing-attribution-overview"]');
+  const statusContainer = document.querySelector('[data-testid="chip-status-pill"]');
   let status = 'Unknown';
+  console.log("scrapePageInfo", statusContainer);
 
-  // Check if statusElements are available
-  if (statusElements && statusElements.length > 1) {
-    status = statusElements[1].textContent.trim();
+  // // Check if statusElements are available
+  // if (statusElements && statusElements.length > 1) {
+  //   status = statusElements[1].textContent.trim();
+  // }
+  if (statusContainer) {
+    const spans = statusContainer.querySelectorAll('span');
+    spans.forEach(span => {
+      const text = span.textContent.trim();
+      console.log("status text", text);
+      if (text) {
+        status = text;
+      }
+    });
   }
 
   let mlsId = null;
-  if (container) {
-    const spans = container.querySelectorAll('span');
+  if (mlsContainer) {
+    const spans = mlsContainer.querySelectorAll('span');
     spans.forEach(span => {
       const text = span.textContent.trim();
       if (text.startsWith("MLS#:") || text.includes("MLS#")) {
