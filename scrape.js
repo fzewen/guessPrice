@@ -35,6 +35,7 @@ input.addEventListener('submit', function (event) {
     price: price,
     url: curUrl,
     status: status,
+    updateTime: Date.now(),
   };
   chrome.runtime.sendMessage({
     type: 'user_input',
@@ -71,19 +72,26 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   if (!tab.url.startsWith(eligiblePages)) {
     document.getElementById('ineligible').style.display = 'block';
     document.getElementById('eligible').style.display = 'none';
-    return;
+  } else {
+    document.getElementById('eligible').style.display = 'block';
+    chrome.runtime.sendMessage({ action: 'scrape', tabId: tab.id });
   }
-  document.getElementById('eligible').style.display = 'block';
-  chrome.runtime.sendMessage({ action: 'scrape', tabId: tab.id });
-
   chrome.runtime.onMessage.addListener(async (msg) => {
     if (msg.action === 'trendLoaded') {
       setTrend(msg.data);
     } else if (msg.action === 'clicked') {
       setInputStatus(true);
+    } else if (msg.action === 'guessesLoaded') {
+      // set icon with number of guesses
+      // similar on the guesses tab
     } else if (msg.action === 'scrapedData') {
       document.getElementById('price').innerText = msg.data.price;
       const mlsId = msg.data.mlsId;
+      if (!mlsId) {
+        document.getElementById('ineligible').style.display = 'block';
+        document.getElementById('eligible').style.display = 'none';
+        return;
+      }
       curMlsId = mlsId;
       document.getElementById('mlsId').innerText = mlsId;
 
@@ -145,6 +153,7 @@ const getSearchLink = (mlsId) => {
 const loadGuess = async () => {
   const data = await chrome.storage.sync.get('guesses');
   const guessList = document.getElementById('guessList');
+  const filterSelect = document.getElementById('filter-select');
   let pagination = document.getElementById('pagination');
 
   // Check if pagination already exists
@@ -157,12 +166,25 @@ const loadGuess = async () => {
   guessList.innerHTML = '';
   pagination.innerHTML = '';
 
-  const guesses = Object.keys(data.guesses);
+  let guesses = Object.keys(data.guesses);
 
-  // Move curMlsId to the front of the list if it exists
-  if (curMlsId && guesses.includes(curMlsId)) {
-    guesses.splice(guesses.indexOf(curMlsId), 1); // Remove curMlsId from its current position
-    guesses.unshift(curMlsId); // Add curMlsId to the beginning of the list
+  // Sort items by updateTime by default
+  guesses.sort((a, b) => {
+    const timeA = data.guesses?.[a]?.updateTime || 0;
+    const timeB = data.guesses?.[b]?.updateTime || 0;
+    return timeB - timeA; // Descending order
+  });
+
+  // Filter items based on selected status
+  const filterStatus = filterSelect.value;
+  if (filterStatus === 'other') {
+    guesses = guesses.filter(
+      (mlsId) =>
+        data.guesses?.[mlsId]?.status !== 'For sale' &&
+        data.guesses?.[mlsId]?.status !== 'Sold'
+    );
+  } else if (filterStatus !== 'all') {
+    guesses = guesses.filter((mlsId) => data.guesses?.[mlsId]?.status === filterStatus);
   }
 
   const itemsPerPage = 5;
@@ -188,7 +210,7 @@ const loadGuess = async () => {
         statusPill.classList.add('green');
       } else if (status === 'Sold') {
         statusPill.classList.add('red');
-      } else  {
+      } else {
         statusPill.classList.add('yellow');
       }
 
@@ -233,6 +255,9 @@ const loadGuess = async () => {
     }
   }
 };
+
+// Add event listener for the filter dropdown
+document.getElementById('filter-select').addEventListener('change', loadGuess);
 
 const setTrend = (data) => {
   // Hide the loading indicator

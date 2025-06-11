@@ -40,7 +40,7 @@ chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
     // This is not very efficient, unless a global storage to load once
     let data = await chrome.storage.sync.get('guesses');
     data.guesses = data.guesses || {};
-    data.guesses[updateData.mlsId] = { price: updateData.price, status: updateData.status, url: updateData.url };
+    data.guesses[updateData.mlsId] = updateData;
     chrome.storage.sync.set(data);
 
     updateData.userId = signInuserId;
@@ -98,6 +98,7 @@ async function loadGuess() {
         data.guesses[item.mlsId].winPrice = item.winPrice;
         chrome.storage.sync.set(data);
       });
+      chrome.runtime.sendMessage({ action: "guessesLoaded", data: res });
     })
     .catch(error => {
       console.error('Fetch error:', error);
@@ -124,16 +125,17 @@ function updateGuess(data) {
 function scrapePageInfo() {
   let price = document.querySelector(`[data-testid="price"]`);
   const container = document.querySelector('[data-testid="listing-attribution-overview"]');
-  const statusElements = document.querySelector('[data-testid="chip-status-pill"] span');
+  const statusElements = document.querySelectorAll('[data-testid="chip-status-pill"] span');
   let status = 'Unknown';
-  if (statusElements.length > 1) {
+
+  // Check if statusElements are available
+  if (statusElements && statusElements.length > 1) {
     status = statusElements[1].textContent.trim();
   }
-  let mlsId = null;
 
+  let mlsId = null;
   if (container) {
     const spans = container.querySelectorAll('span');
-
     spans.forEach(span => {
       const text = span.textContent.trim();
       if (text.startsWith("MLS#:") || text.includes("MLS#")) {
@@ -143,6 +145,7 @@ function scrapePageInfo() {
       }
     });
   }
+
   let priceText;
   if (!price) {
     const priceElement = document.getElementsByClassName('price-text')[0];
@@ -150,11 +153,13 @@ function scrapePageInfo() {
   } else {
     priceText = price.firstElementChild.innerText;
   }
+
   const data = {
     price: priceText,
     mlsId: mlsId,
     status: status,
   };
+
   chrome.runtime.sendMessage({ action: "scrapedData", data });
 }
 
