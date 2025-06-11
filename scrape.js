@@ -3,7 +3,6 @@ const result = document.getElementById('result');
 const submitInfo = document.getElementById('submitInfo');
 const loadingIndicator = document.getElementById('loading-indicator');
 let curUrl;
-let curMlsId;
 
 input.addEventListener('click', () => {
   submitInfo.innerText = '';
@@ -28,6 +27,14 @@ input.addEventListener('submit', function (event) {
   const status = document.getElementById('status-text').innerText;
   if (price === '') {
     submitInfo.innerText = '❌ Please enter a price.';
+    return;
+  }
+  if (status === 'Sold') {
+    submitInfo.innerText = '❌ Cannot submit guess for a sold property.';
+    return;
+  }
+  if (status === 'Unknown') {
+    submitInfo.innerText = '❌ Cannot get the correct status. Retry later.';
     return;
   }
   const data = {
@@ -76,14 +83,27 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     document.getElementById('eligible').style.display = 'block';
     chrome.runtime.sendMessage({ action: 'scrape', tabId: tab.id });
   }
+  chrome.action.getBadgeText({ tabId: tab.id }, (badgeText) => {
+    // If badgeText is not empty, update the badge
+    if (badgeText) {
+      // reset the badge text
+      updateBadge(0);
+      // swith to the guessed tab
+      document.getElementById('tab-guessed').click();
+      // set the filter to 'sold'
+      document.getElementById('filter-select').value = 'Sold';
+      // load the guesses
+      loadGuess();
+    }
+  });
+
   chrome.runtime.onMessage.addListener(async (msg) => {
     if (msg.action === 'trendLoaded') {
       setTrend(msg.data);
-    } else if (msg.action === 'clicked') {
-      setInputStatus(true);
     } else if (msg.action === 'guessesLoaded') {
-      // set icon with number of guesses
-      // similar on the guesses tab
+      // set icon with number of results
+      const guessCount = Object.keys(msg.data).length; // Count the number of guesses
+      updateBadge(guessCount); // Update the badge with the count
     } else if (msg.action === 'scrapedData') {
       document.getElementById('price').innerText = msg.data.price;
       const mlsId = msg.data.mlsId;
@@ -92,7 +112,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         document.getElementById('eligible').style.display = 'none';
         return;
       }
-      curMlsId = mlsId;
       document.getElementById('mlsId').innerText = mlsId;
 
       const loads = document.getElementById('h1s');
@@ -177,7 +196,15 @@ const loadGuess = async () => {
 
   // Filter items based on selected status
   const filterStatus = filterSelect.value;
-  if (filterStatus === 'other') {
+  if (filterStatus === 'sold') {
+    guesses = guesses.filter((mlsId) => data.guesses?.[mlsId]?.status === 'Sold');
+    // Sort items by closeTime for sold items
+    guesses.sort((a, b) => {
+      const timeA = data.guesses?.[a]?.closeTime || 0;
+      const timeB = data.guesses?.[b]?.closeTime || 0;
+      return timeB - timeA; // Descending order
+    });
+  } else if (filterStatus === 'other') {
     guesses = guesses.filter(
       (mlsId) =>
         data.guesses?.[mlsId]?.status !== 'For sale' &&
@@ -326,3 +353,12 @@ const updateStatus = (status) => {
     statusDot.classList.add('yellow');
   }
 };
+
+function updateBadge(count) {
+  // Set the badge text to the count
+  if (count === 0) {
+    chrome.action.setBadgeText({ text: '' });
+    return;
+  }
+  chrome.action.setBadgeText({ text: count.toString() });
+}

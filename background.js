@@ -23,11 +23,6 @@ chrome.identity.onSignInChanged.addListener((account, signedIn) => {
   }
 });
 
-chrome.action.onClicked.addListener((tab) => {
-  // the sold disable not working from time to time, this fix still not work
-  chrome.runtime.sendMessage({ action: "clicked" });
-});
-
 chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
   if (msg.action === "scrape") {
     chrome.scripting.executeScript({
@@ -49,6 +44,9 @@ chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
     // Do something with the input value (e.g., send it to a server)
   } else if (msg.action === "fetchTrend") {
     await loadTrend();
+  } else if (msg.action === 'guessesLoaded') {
+    const guessCount = Object.keys(msg.data).length; // Count the number of guesses
+    updateBadge(guessCount); // Update the badge with the count
   }
 });
 
@@ -98,7 +96,8 @@ async function loadGuess() {
         data.guesses[item.mlsId].winPrice = item.winPrice;
         chrome.storage.sync.set(data);
       });
-      chrome.runtime.sendMessage({ action: "guessesLoaded", data: res });
+      updateBadge(data.length); // Update badge with the number of guesses
+      chrome.runtime.sendMessage({ action: "guessesLoaded", data: data });
     })
     .catch(error => {
       console.error('Fetch error:', error);
@@ -125,7 +124,7 @@ function updateGuess(data) {
 function scrapePageInfo() {
   let price = document.querySelector(`[data-testid="price"]`);
   const mlsContainer = document.querySelector('[data-testid="listing-attribution-overview"]');
-  const statusContainer = document.querySelector('[data-testid="chip-status-pill"]');
+  const statusContainer = document.querySelector('[data-testid="gallery-status-pill"]');
   let status = 'Unknown';
   console.log("scrapePageInfo", statusContainer);
 
@@ -191,17 +190,16 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// below are push testing
-// self.addEventListener('push', function(event) {
-//   const data = event.data?.json() || {};
-//   console.log('Push received:', data);
+function updateBadge(count) {
+  // Set the badge text to the count
+  chrome.action.setBadgeText({ text: count.toString() });
+}
 
-//   const title = data.title || 'New Notification';
-//   const options = {
-//     body: data.body || 'You have a new message.',
-//     icon: '/images/icon-32.png'
-//   };
+// Testing the badge update on install and startup
+// chrome.runtime.onInstalled.addListener(() => {
+//   updateBadge('3'); // Default badge text
+// });
 
-//   // *notification not working
-//   event.waitUntil(self.registration.showNotification(title, options));
+// chrome.runtime.onStartup.addListener(() => {
+//   updateBadge('3'); // Default badge text
 // });
