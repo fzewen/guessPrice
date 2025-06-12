@@ -53,13 +53,14 @@ body {
 }
 
 .subtitle {
-  font-size: 1.05rem;
+  font-size: 14px;
   margin-bottom: 6px;
   color: #1976d2;
   text-align: center;
 }
 
 #mlsId {
+  font-weight: bold;
   font-size: 0.95rem;
   color: #666;
   margin-bottom: 4px;
@@ -70,7 +71,7 @@ form {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 18px; /* Increased space between form elements */
+  gap: 8px; /* Increased space between form elements */
   margin-top: 8px;
   align-items: center; /* Center form elements */
 }
@@ -78,7 +79,7 @@ form {
 .form-group {
   display: flex;
   flex-direction: row;
-  gap: 8px; /* More space between icon and input */
+  gap: 4px; /* More space between icon and input */
   align-items: center;
 }
 
@@ -106,7 +107,7 @@ form button[type='submit'] {
   font-size: 1rem;
   transition: background 0.2s;
   cursor: pointer;
-  margin-top: 14px; /* Increased spacing above the button */
+  margin-top: 4px; /* Reduced spacing above the button */
 }
 
 form button[type='submit']:hover:enabled {
@@ -289,4 +290,26 @@ form button[type='submit']:hover:enabled {
   background-color: #1976d2;
   color: #fff;
   border-color: #1976d2;
+}
+
+/* Property image styles */
+#property-image {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+#property-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* MLS ID and Price container styles */
+#mls-price-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
 }

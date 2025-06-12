@@ -10,12 +10,20 @@
         <div id="ineligible" class="tab-content">Try on Zillow home detail pages</div>
         <div id="eligible" class="tab-content">
           <div id="h1s">Loading...</div>
+          <!-- Property image -->
+          <div id="property-image" class="property-image">
+            <img id="property-img" src="" class="property-img"/>
+          </div>
+          <div id="address" class="subtitle"></div>
           <div id="status" class="status">
             <span class="status-dot" id="status-dot"></span>
             <span id="status-text">Status</span>
           </div>
-          <div id="mlsId"></div>
-          <div id="price" class="subtitle"></div>
+          <!-- MLS ID and Price in the same line -->
+          <div id="mls-price-container" class="mls-price-container">
+            <div id="mlsId" class="mlsId"></div>
+            <div id="price" class="subtitle"></div>
+          </div>
           <form id="my-form">
             <div class="form-group">
               <span>&#x1F4B0</span>
@@ -31,9 +39,9 @@
             <div id="submitInfo"></div>
           </form>
           <div id="result" style="display: none">
-              <div id="win">&#127775</div>
-              <div id="guess">&#x1F4B0</div>
-              <div id="rank">&#127942</div>
+            <div id="win">&#127775</div>
+            <div id="guess">&#x1F4B0</div>
+            <div id="rank">&#127942</div>
           </div>
         </div>
       </div>

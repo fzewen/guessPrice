@@ -124,14 +124,12 @@ function updateGuess(data) {
 function scrapePageInfo() {
   let price = document.querySelector(`[data-testid="price"]`);
   const mlsContainer = document.querySelector('[data-testid="listing-attribution-overview"]');
-  const statusContainer = document.querySelector('[data-testid="gallery-status-pill"]');
+  const statusContainer = document.querySelector('[data-testid="chip-status-pill"]') || document.querySelector('[data-testid="gallery-status-pill"]');
+  const heroImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content');
+  const address = document.querySelector('meta[property="og:zillow_fb:address"]')?.getAttribute("content");
+  // const address = ogTitle?.split('|')[0].trim();
   let status = 'Unknown';
-  console.log("scrapePageInfo", statusContainer);
-
-  // // Check if statusElements are available
-  // if (statusElements && statusElements.length > 1) {
-  //   status = statusElements[1].textContent.trim();
-  // }
+  console.log(statusContainer);
   if (statusContainer) {
     const spans = statusContainer.querySelectorAll('span');
     spans.forEach(span => {
@@ -168,7 +166,10 @@ function scrapePageInfo() {
     price: priceText,
     mlsId: mlsId,
     status: status,
+    image: heroImage,
+    address: address,
   };
+  console.log("scraped data", data);
 
   chrome.runtime.sendMessage({ action: "scrapedData", data });
 }

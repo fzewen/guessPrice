@@ -25,6 +25,8 @@ input.addEventListener('submit', function (event) {
   const price = document.getElementById('priceInput').value;
   const mlsId = document.getElementById('mlsId').innerText;
   const status = document.getElementById('status-text').innerText;
+  const propertyImg = document.getElementById('property-img').src;
+  const address = document.getElementById('address').innerText;
   if (price === '') {
     submitInfo.innerText = '❌ Please enter a price.';
     return;
@@ -43,7 +45,10 @@ input.addEventListener('submit', function (event) {
     url: curUrl,
     status: status,
     updateTime: Date.now(),
+    img: propertyImg,
+    address: address,
   };
+  console.log;('Submitting guess:', data);
   chrome.runtime.sendMessage({
     type: 'user_input',
     data,
@@ -101,11 +106,22 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (msg.action === 'trendLoaded') {
       setTrend(msg.data);
     } else if (msg.action === 'guessesLoaded') {
-      // set icon with number of results
+      // Set icon with number of results
       const guessCount = Object.keys(msg.data).length; // Count the number of guesses
       updateBadge(guessCount); // Update the badge with the count
     } else if (msg.action === 'scrapedData') {
+      console.log('Received scraped data:', msg.data);
+      // Update the property image
+      const propertyImg = document.getElementById('property-img');
+      propertyImg.src = msg.data.image;
+
+      // Update the price
       document.getElementById('price').innerText = msg.data.price;
+
+      // Update the address
+      const addressElement = document.getElementById('address');
+      addressElement.innerText = msg.data.address || 'Address not available';
+
       const mlsId = msg.data.mlsId;
       if (!mlsId) {
         document.getElementById('ineligible').style.display = 'block';
@@ -126,11 +142,11 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       }
       if (msg.data.status == 'Sold') {
         setInputStatus(true);
-        // the extra logic here to check against stored data
+        // The extra logic here to check against stored data
         if (data.guess && data.guesses?.[mlsId]) {
           const status = data.guesses?.[mlsId].status;
           if (status == 'Sold') {
-            // load result
+            // Load result
             result.style.display = 'block';
             document.getElementById('win').innerText =
               '&#127775 ' + data.guesses?.[mlsId].winPrice;
@@ -139,7 +155,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             document.getElementById('rank').innerText =
               '&#127942 ' + data.guesses?.[mlsId].rank;
           } else {
-            // now result pending, wait cron job to update cloud & local
+            // Now result pending, wait cron job to update cloud & local
             result.style.display = 'None';
           }
         }
@@ -214,7 +230,7 @@ const loadGuess = async () => {
     guesses = guesses.filter((mlsId) => data.guesses?.[mlsId]?.status === filterStatus);
   }
 
-  const itemsPerPage = 5;
+  const itemsPerPage = 4;
   const totalPages = Math.ceil(guesses.length / itemsPerPage);
 
   const renderPage = (page) => {
@@ -226,6 +242,16 @@ const loadGuess = async () => {
       const mlsId = guesses[i];
       const listItem = document.createElement('li');
       listItem.className = 'guess-item'; // Add a class for styling
+      listItem.style.display = 'flex'; // Use flexbox for alignment
+      listItem.style.alignItems = 'center'; // Align items vertically
+      listItem.style.gap = '10px'; // Add spacing between elements
+
+      // Create the property image
+      const propertyImg = document.createElement('img');
+      propertyImg.src = data.guesses?.[mlsId]?.img || './images/default-house-image.png'; // Use a default image if none is provided
+      propertyImg.style.width = '50px'; // Set image width
+      propertyImg.style.height = '50px'; // Set image height
+      propertyImg.style.borderRadius = '4px'; // Add rounded corners
 
       // Create the status pill
       const statusPill = document.createElement('span');
@@ -237,15 +263,15 @@ const loadGuess = async () => {
         statusPill.classList.add('green');
       } else if (status === 'Sold') {
         statusPill.classList.add('red');
-      } else {
+      } else  {
         statusPill.classList.add('yellow');
       }
 
       // Create the MLS link
-      const mlsLink = document.createElement('a');
-      mlsLink.href = data.guesses?.[mlsId]?.url ?? getSearchLink(mlsId);
-      mlsLink.innerText = mlsId;
-      mlsLink.target = '_blank';
+      const address = document.createElement('a');
+      address.href = data.guesses?.[mlsId]?.url ?? getSearchLink(mlsId);
+      address.innerText = data.guesses?.[mlsId]?.address || mlsId;
+      address.target = '_blank';
 
       // Create the formatted line element
       const formattedLineElement = document.createElement('span');
@@ -255,11 +281,17 @@ const loadGuess = async () => {
       }
       formattedLineElement.innerText = formattedLine;
 
-      // Append the status pill, MLS link, and formatted line to the list item
-      listItem.appendChild(statusPill);
-      listItem.appendChild(mlsLink);
-      listItem.appendChild(document.createElement('br')); // Add a line break
-      listItem.appendChild(formattedLineElement);
+      // Append the property image, status pill, MLS link, and formatted line to the list item
+      listItem.appendChild(propertyImg);
+
+      const propertyInfo = document.createElement('div');
+      propertyInfo.appendChild(statusPill);
+      propertyInfo.appendChild(address);
+      propertyInfo.appendChild(document.createElement('br')); // Line break
+      propertyInfo.appendChild(formattedLineElement);
+
+      listItem.appendChild(propertyInfo);
+
       guessList.appendChild(listItem);
     }
   };
@@ -291,25 +323,45 @@ const setTrend = (data) => {
   loadingIndicator.style.display = 'none';
   const trendList = document.getElementById('trendList');
   trendList.innerHTML = ''; // Clear previous entries if needed
+
   Object.keys(data).forEach((mlsId) => {
     const listItem = document.createElement('li');
+    listItem.className = 'trend-item'; // Add a class for styling
 
-    // First line: MLS link
+    // Create the status pill
+    const statusPill = document.createElement('span');
+    statusPill.className = 'status-pill'; // Base class for the pill
+
+    // Update the status pill color using CSS classes
+    const status = data[mlsId]?.status || 'Unknown';
+    if (status === 'For sale' || status === 'Active') {
+      statusPill.classList.add('green');
+    } else if (status === 'Sold' || status === 'Closed') {
+      statusPill.classList.add('red');
+    } else {
+      statusPill.classList.add('yellow');
+    }
+
+    // Create the MLS link
     const mlsLink = document.createElement('a');
-    mlsLink.href = data[mlsId].url ?? getSearchLink(mlsId);
+    mlsLink.href = data[mlsId]?.url ?? getSearchLink(mlsId);
     mlsLink.innerText = mlsId;
     mlsLink.target = '_blank';
 
-    // Second line: formatted info
+    // Create the formatted info element
     const infoDiv = document.createElement('div');
     infoDiv.className = 'trend-info'; // Use CSS class for styling
-    infoDiv.textContent = `🔥 ${data[mlsId].accessCnt} acc 🕐 ${shortTimeAgo(
-      data[mlsId].lastAcessTime
+    infoDiv.textContent = `🔥 ${data[mlsId]?.accessCnt} acc 🕐 ${shortTimeAgo(
+      data[mlsId]?.lastAcessTime
     )}`;
 
-    listItem.appendChild(mlsLink);
-    listItem.appendChild(document.createElement('br')); // Line break
-    listItem.appendChild(infoDiv);
+    // Append the status pill, MLS link, and info to the list item
+    const propertyInfo = document.createElement('div');
+    propertyInfo.appendChild(statusPill);
+    propertyInfo.appendChild(mlsLink);
+    propertyInfo.appendChild(document.createElement('br')); // Line break
+    propertyInfo.appendChild(infoDiv);
+    listItem.appendChild(propertyInfo);
 
     trendList.appendChild(listItem);
   });
