@@ -267,7 +267,7 @@ const loadGuess = async () => {
         statusPill.classList.add('yellow');
       }
 
-      // Create the MLS link
+      // Create the address link
       const address = document.createElement('a');
       address.href = data.guesses?.[mlsId]?.url ?? getSearchLink(mlsId);
       address.innerText = data.guesses?.[mlsId]?.address || mlsId;
@@ -326,7 +326,10 @@ const setTrend = (data) => {
 
   Object.keys(data).forEach((mlsId) => {
     const listItem = document.createElement('li');
-    listItem.className = 'trend-item'; // Add a class for styling
+    listItem.className = 'guess-item'; // Add a class for styling
+    listItem.style.display = 'flex'; // Use flexbox for alignment
+    listItem.style.alignItems = 'center'; // Align items vertically
+    listItem.style.gap = '10px'; // Add spacing between elements
 
     // Create the status pill
     const statusPill = document.createElement('span');
@@ -342,11 +345,24 @@ const setTrend = (data) => {
       statusPill.classList.add('yellow');
     }
 
+    // Create the property image
+    const propertyImg = document.createElement('img');
+    propertyImg.src = data[mlsId]?.img || './images/default-house-image.png'; // Use a default image if none is provided
+    propertyImg.style.width = '50px'; // Set image width
+    propertyImg.style.height = '50px'; // Set image height
+    propertyImg.style.borderRadius = '4px'; // Add rounded corners
+
     // Create the MLS link
     const mlsLink = document.createElement('a');
     mlsLink.href = data[mlsId]?.url ?? getSearchLink(mlsId);
     mlsLink.innerText = mlsId;
     mlsLink.target = '_blank';
+
+    // Create the address link
+    const address = document.createElement('a');
+    address.href = data[mlsId]?.url ?? getSearchLink(mlsId);
+    address.innerText = data[mlsId]?.address || mlsId;
+    address.target = '_blank';
 
     // Create the formatted info element
     const infoDiv = document.createElement('div');
@@ -355,10 +371,12 @@ const setTrend = (data) => {
       data[mlsId]?.lastAcessTime
     )}`;
 
+    listItem.appendChild(propertyImg);
+
     // Append the status pill, MLS link, and info to the list item
     const propertyInfo = document.createElement('div');
     propertyInfo.appendChild(statusPill);
-    propertyInfo.appendChild(mlsLink);
+    propertyInfo.appendChild(address);
     propertyInfo.appendChild(document.createElement('br')); // Line break
     propertyInfo.appendChild(infoDiv);
     listItem.appendChild(propertyInfo);
