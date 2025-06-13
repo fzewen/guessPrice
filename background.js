@@ -77,27 +77,38 @@ async function loadTrend() {
 // Not fully checked
 async function loadGuess() {
   const result = await chrome.storage.sync.get('guesses');
-  const activeMlsIDs = Object.entries(result)
-    .filter(([mlsID, info]) => info.status === 'active')
+  const activeMlsIDs = Object.entries(result.guesses || {})
+    .filter(([mlsID, info]) => info.status === 'Active')
     .map(([mlsID]) => mlsID);
 
   const params = new URLSearchParams();
-  activeMlsIDs.forEach(id => params.append('mls', id));  // mls=123&mls=456&...
+  activeMlsIDs.forEach(id => params.append('mls', id)); // mls=123&mls=456&...
   params.append('userId', signInuserId);
 
   const url = `https://us-central1-guessprice-a08ba.cloudfunctions.net/loadResult?${params.toString()}`;
+  console.log("loadGuess url", url);
+
   fetch(url)
     .then(async response => {
       const res = await response.json();
-      res.forEach(async (item) => {
-        let data = await chrome.storage.sync.get(`guesses`);
-        data.guesses[item.mlsId].status = 'Sold';
-        data.guesses[item.mlsId].rank = item.rank;
-        data.guesses[item.mlsId].winPrice = item.winPrice;
-        chrome.storage.sync.set(data);
-      });
-      updateBadge(data.length); // Update badge with the number of guesses
-      chrome.runtime.sendMessage({ action: "guessesLoaded", data: data });
+      console.log("loadGuess result", res);
+
+      // Ensure res is an array
+      if (Array.isArray(res)) {
+        res.forEach(async (item) => {
+          let data = await chrome.storage.sync.get('guesses');
+          data.guesses[item.mlsId] = data.guesses[item.mlsId] || {}; // Ensure the mlsId exists
+          data.guesses[item.mlsId].status = 'Sold';
+          data.guesses[item.mlsId].rank = item.rank;
+          data.guesses[item.mlsId].winPrice = item.winPrice;
+          chrome.storage.sync.set(data);
+        });
+
+        updateBadge(res.length); // Update badge with the number of guesses
+        chrome.runtime.sendMessage({ action: "guessesLoaded", data: res });
+      } else {
+        console.error("Unexpected response format: res is not an array", res);
+      }
     })
     .catch(error => {
       console.error('Fetch error:', error);
@@ -177,7 +188,7 @@ function scrapePageInfo() {
 // use poll for easy implementation
 chrome.runtime.onInstalled.addListener(() => {
   // fire per half day
-  chrome.alarms.create("pollServer", { periodInMinutes: 720 });
+  chrome.alarms.create("pollServer", { periodInMinutes: 5 });
 });
 
 chrome.runtime.onStartup.addListener(() => {
@@ -187,6 +198,7 @@ chrome.runtime.onStartup.addListener(() => {
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "pollServer") {
+    console.log("Polling server for updates...", Date.now());
     loadGuess();
   }
 });

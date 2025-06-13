@@ -111,6 +111,16 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       updateBadge(guessCount); // Update the badge with the count
     } else if (msg.action === 'scrapedData') {
       console.log('Received scraped data:', msg.data);
+
+      const mlsId = msg.data.mlsId;
+      if (!mlsId) {
+        document.getElementById('ineligible').style.display = 'block';
+        document.getElementById('eligible').style.display = 'none';
+        return;
+      }
+      // Update the MLS ID
+      document.getElementById('mlsId').innerText = mlsId;
+
       // Update the property image
       const propertyImg = document.getElementById('property-img');
       propertyImg.src = msg.data.image;
@@ -122,49 +132,37 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const addressElement = document.getElementById('address');
       addressElement.innerText = msg.data.address || 'Address not available';
 
-      const mlsId = msg.data.mlsId;
-      if (!mlsId) {
-        document.getElementById('ineligible').style.display = 'block';
-        document.getElementById('eligible').style.display = 'none';
-        return;
-      }
-      document.getElementById('mlsId').innerText = mlsId;
-
+      // remove the loading indicator
       const loads = document.getElementById('h1s');
       loads.innerHTML = '';
+
       updateStatus(msg.data.status);
 
-      let data;
-      try {
-        data = await chrome.storage.sync.get('guesses');
-      } catch (e) {
-        // Handle error that occurred during storage initialization.
-      }
-      if (msg.data.status == 'Sold') {
+      const data = await chrome.storage.sync.get('guesses');
+      let guessInfo = data?.guesses?.[mlsId];
+
+      if (guessInfo.status == 'Sold') {
         setInputStatus(true);
         // The extra logic here to check against stored data
-        if (data.guess && data.guesses?.[mlsId]) {
-          const status = data.guesses?.[mlsId].status;
-          if (status == 'Sold') {
+        console.log('Data from storage:', guessInfo);
+        if (guessInfo) {
             // Load result
             result.style.display = 'block';
+            input.style.display = 'none';
             document.getElementById('win').innerText =
-              '&#127775 ' + data.guesses?.[mlsId].winPrice;
-            document.getElementById('price').innerText =
-              '&#x1F4B0 ' + data.guesses?.[mlsId].price;
+              '🌟 ' + guessInfo.winPrice;
+            document.getElementById('guess').innerText =
+              '💰 ' + guessInfo.price;
             document.getElementById('rank').innerText =
-              '&#127942 ' + data.guesses?.[mlsId].rank;
-          } else {
-            // Now result pending, wait cron job to update cloud & local
-            result.style.display = 'None';
-          }
+              '🏆 ' + guessInfo.rank;
+        } else {
+          // Now result pending, wait cron job to update cloud & local
+          result.style.display = 'None';
         }
       } else {
         setInputStatus(false);
-        if (data && data.guesses?.[mlsId]) {
-          document.getElementById('priceInput').value =
-            data.guesses?.[mlsId].price;
-        }
+        input.style.display = 'block';
+        document.getElementById('priceInput').value = guessInfo?.price || '';
       }
     }
   });
@@ -325,6 +323,7 @@ const setTrend = (data) => {
   trendList.innerHTML = ''; // Clear previous entries if needed
 
   Object.keys(data).forEach((mlsId) => {
+    console.log('Trend data for MLS ID:', mlsId, data[mlsId]);
     const listItem = document.createElement('li');
     listItem.className = 'guess-item'; // Add a class for styling
     listItem.style.display = 'flex'; // Use flexbox for alignment
