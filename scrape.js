@@ -48,7 +48,8 @@ input.addEventListener('submit', function (event) {
     img: propertyImg,
     address: address,
   };
-  console.log;('Submitting guess:', data);
+  console.log;
+  'Submitting guess:', data;
   chrome.runtime.sendMessage({
     type: 'user_input',
     data,
@@ -65,7 +66,7 @@ tabs.forEach((tab) => {
       document.getElementById(`${t}`).style.display = 'None';
     });
     el.style.fontWeight = 'bold';
-    document.getElementById(`${tab}`).style.display = 'Block';
+    document.getElementById(`${tab}`).style.display = 'flex';
     if (tab == 'guessed') {
       await loadGuess();
     } else if (tab == 'trending') {
@@ -85,7 +86,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     document.getElementById('ineligible').style.display = 'block';
     document.getElementById('eligible').style.display = 'none';
   } else {
-    document.getElementById('eligible').style.display = 'block';
+    document.getElementById('eligible').style.display = 'flex';
     chrome.runtime.sendMessage({ action: 'scrape', tabId: tab.id });
   }
   chrome.action.getBadgeText({ tabId: tab.id }, (badgeText) => {
@@ -211,7 +212,9 @@ const loadGuess = async () => {
   // Filter items based on selected status
   const filterStatus = filterSelect.value;
   if (filterStatus === 'sold') {
-    guesses = guesses.filter((mlsId) => data.guesses?.[mlsId]?.status === 'Sold');
+    guesses = guesses.filter(
+      (mlsId) => data.guesses?.[mlsId]?.status === 'Sold'
+    );
     // Sort items by closeTime for sold items
     guesses.sort((a, b) => {
       const timeA = data.guesses?.[a]?.closeTime || 0;
@@ -225,7 +228,9 @@ const loadGuess = async () => {
         data.guesses?.[mlsId]?.status !== 'Sold'
     );
   } else if (filterStatus !== 'all') {
-    guesses = guesses.filter((mlsId) => data.guesses?.[mlsId]?.status === filterStatus);
+    guesses = guesses.filter(
+      (mlsId) => data.guesses?.[mlsId]?.status === filterStatus
+    );
   }
 
   const itemsPerPage = 4;
@@ -246,7 +251,8 @@ const loadGuess = async () => {
 
       // Create the property image
       const propertyImg = document.createElement('img');
-      propertyImg.src = data.guesses?.[mlsId]?.img || './images/default-house-image.png'; // Use a default image if none is provided
+      propertyImg.src =
+        data.guesses?.[mlsId]?.img || './images/default-house-image.png'; // Use a default image if none is provided
       propertyImg.style.width = '50px'; // Set image width
       propertyImg.style.height = '50px'; // Set image height
       propertyImg.style.borderRadius = '4px'; // Add rounded corners
@@ -261,7 +267,7 @@ const loadGuess = async () => {
         statusPill.classList.add('green');
       } else if (status === 'Sold') {
         statusPill.classList.add('red');
-      } else  {
+      } else {
         statusPill.classList.add('yellow');
       }
 
@@ -300,7 +306,16 @@ const loadGuess = async () => {
       const pageButton = document.createElement('button');
       pageButton.innerText = i;
       pageButton.className = 'pagination-button'; // Add a class for styling
-      pageButton.addEventListener('click', () => renderPage(i));
+      if (i === 1) pageButton.classList.add('active'); // First page is active by default
+      pageButton.addEventListener('click', () => {
+        // Remove active class from all buttons
+        document.querySelectorAll('.pagination-button').forEach((btn) => {
+          btn.classList.remove('active');
+        });
+        // Add active class to clicked button
+        pageButton.classList.add('active');
+        renderPage(i);
+      });
       pagination.appendChild(pageButton);
     }
   };
